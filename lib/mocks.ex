@@ -1,8 +1,6 @@
 # A set of modules to mock various other Teiserver modules
 defmodule Central.Config do
-  def get_site_config_cache("teiserver.Max deviation") do
-
-  end
+  def get_site_config_cache("teiserver.Max deviation"), do: 10
 end
 
 defmodule Teiserver.Data.Types do
