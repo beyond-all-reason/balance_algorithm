@@ -1,21 +1,18 @@
 # BalanceAlgorithm
 
-**TODO: Add description**
+A set of files from [Teiserver](https://github.com/beyond-all-reason/teiserver) for testing balance algorithm changes without needing to have a whole server testing setup.
 
 ## Installation
+You will need to install [Elixir](https://elixir-lang.org/).
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `balance_algorithm` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [
-    {:balance_algorithm, "~> 0.1.0"}
-  ]
-end
 ```
+git clone git@github.com:beyond-all-reason/balance_algorithm.git
+cd balance_algorithm
+mix deps.get
+mix test
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/balance_algorithm>.
-
+> Compiling 1 file (.ex)
+> .........
+> Finished in 0.02 seconds (0.02s async, 0.00s sync)
+> 1 doctest, 8 tests, 0 failures
+```
