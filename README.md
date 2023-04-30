@@ -18,3 +18,11 @@ mix test
 > Finished in 0.02 seconds (0.02s async, 0.00s sync)
 > 1 doctest, 8 tests, 0 failures
 ```
+
+## Usage
+
+#### Tests
+We can use unit tests to ensure implementations of each algorithm produce the output expected, it also allows us to change internal details and ensure the algorithms as a whole are unaffected. We can run the tests with `mix test`. Tests are located in the [test] folder.
+
+#### Evaluate against data
+TODO: Mix task to run data against an algorithm and provide scoring metrics/output
