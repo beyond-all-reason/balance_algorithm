@@ -1,3 +1,10 @@
 #!/usr/bin/env bash
 # Pull the latest versions of the files from the Teiserver repo
 
+# Pull balance lib itself
+curl -o "lib/balance_lib.ex" "https://raw.githubusercontent.com/beyond-all-reason/teiserver/master/lib/teiserver/battle/libs/balance_lib.ex"
+
+# And the server tests
+curl -o "test/balance_lib_test.exs" "https://raw.githubusercontent.com/beyond-all-reason/teiserver/master/test/teiserver/battle/balance_lib_test.exs"
+
+sed -i 's/use Central.DataCase, async: true/use ExUnit.Case, async: true/g' test/balance_lib_test.exs
