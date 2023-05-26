@@ -1,4 +1,4 @@
-defmodule Teiserver.Battle.PartyPreserverAlgorithm do
+defmodule Teiserver.Battle.CheekySwitcherAlgorithm do
   import Teiserver.Battle.BalanceUtil
 
   @max_switches 3
@@ -11,13 +11,17 @@ defmodule Teiserver.Battle.PartyPreserverAlgorithm do
     max_team_rating_difference(teams) < 5
   end
 
-  def party_preserver([], _team_count, _opts) do
+  def cheeky_switcher([], _team_count, _opts) do
     {[], []}
   end
 
-  @spec party_preserver(group_list(), number(), list()) :: {team_map(), list()}
-  def party_preserver(expanded_groups, team_count) do party_preserver(expanded_groups, team_count, []) end
-  def party_preserver(expanded_groups, team_count, log) do
+  @spec cheeky_switcher(group_list(), number(), list()) :: {team_map(), list()}
+  @spec cheeky_switcher(
+          [%{count: non_neg_integer, group_rating: float, members: list, ratings: [float]}],
+          number
+        ) :: {[] | %{optional(any) => list}, list}
+  def cheeky_switcher(expanded_groups, team_count) do cheeky_switcher(expanded_groups, team_count, []) end
+  def cheeky_switcher(expanded_groups, team_count, log) do
     {teams, log} = expanded_groups
     |> sort_groups_by_rating()
     |> IO.inspect(label: "Sorted by rating", charlists: :as_lists)
@@ -31,7 +35,7 @@ defmodule Teiserver.Battle.PartyPreserverAlgorithm do
     if acceptable_teams(teams) or parties_left <= 0 do
       {teams, log}
     else
-      party_preserver(
+      cheeky_switcher(
         teams_to_groups_without_largest_party(teams),
         team_count,
         log ++ ["Unacceptable rating difference of #{max_team_rating_difference(teams)} with current parties, retrying without largest party"])

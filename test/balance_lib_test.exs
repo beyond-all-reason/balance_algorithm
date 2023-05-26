@@ -331,7 +331,8 @@ defmodule Teiserver.Battle.BalanceLibTest do
            }
   end
 
-  test "two parties" do
+  @tag runnable: true
+  test "loser_picks: two parties" do
     result =
       BalanceLib.create_balance(
         [
@@ -448,7 +449,7 @@ defmodule Teiserver.Battle.BalanceLibTest do
            }
   end
 
-  test "team_preserver: team ffa" do
+  test "cheeky_switcher: team ffa" do
     result =
       BalanceLib.create_balance(
         [
@@ -460,7 +461,7 @@ defmodule Teiserver.Battle.BalanceLibTest do
           %{6 => 9}
         ],
         3,
-        algorithm: :party_preserver
+        algorithm: :cheeky_switcher
       )
       |> Map.drop([:logs, :time_taken])
 
@@ -505,7 +506,8 @@ defmodule Teiserver.Battle.BalanceLibTest do
            }
   end
 
-  test "team_preserver: two parties" do
+  @tag runnable: true
+  test "cheeky_switcher: MasterBel2 case" do
     result =
       BalanceLib.create_balance(
         [
@@ -530,7 +532,7 @@ defmodule Teiserver.Battle.BalanceLibTest do
           %{116 => 10.27}
         ],
         2,
-        algorithm: :party_preserver
+        algorithm: :cheeky_switcher
       )
 
     assert Map.drop(result, [:logs, :time_taken]) == %{
@@ -568,7 +570,69 @@ defmodule Teiserver.Battle.BalanceLibTest do
   end
 
   @tag runnable: true
-  test "team_preserver: bigger game group" do
+  test "loser_picks: MasterBel2 case" do
+    result =
+      BalanceLib.create_balance(
+        [
+          # Our high tier party
+          %{101 => 9.39, 102 => 15.14},
+
+          # Our other high tier party
+          %{103 => 28.84, 104 => 15.06},
+
+          # Other players, a range of ratings
+          %{105 => 43.69},
+          %{106 => 29.56},
+          %{107 => 28.27},
+          %{108 => 25.34},
+          %{109 => 23.45},
+          %{110 => 21.65},
+          %{111 => 21.6},
+          %{112 => 18.46},
+          %{113 => 17.7},
+          %{114 => 16.29},
+          %{115 => 16.01},
+          %{116 => 10.27}
+        ],
+        2,
+        algorithm: :cheeky_switcher
+      )
+
+    assert Map.drop(result, [:logs, :time_taken]) == %{
+             captains: %{1 => 105, 2 => 106},
+             deviation: 2,
+             ratings: %{1 => 248, 2 => 253},
+             team_groups: %{
+               1 => [
+                 %{count: 2, group_rating: 24.53, members: [101, 102], ratings: [9.39, 15.14]},
+                 %{count: 1, group_rating: 43.69, members: [105], ratings: [43.69]},
+                 %{count: 1, group_rating: 29.56, members: [106], ratings: [29.56]},
+                 %{count: 1, group_rating: 28.27, members: [107], ratings: [28.27]},
+                 %{count: 1, group_rating: 25.34, members: [108], ratings: [25.34]},
+                 %{count: 1, group_rating: 23.45, members: [109], ratings: [23.45]},
+                 %{count: 1, group_rating: 10.27, members: [116], ratings: [10.27]}
+               ],
+               2 => [
+                 %{count: 2, group_rating: 43.9, members: [103, 104], ratings: [28.84, 15.06]},
+                 %{count: 1, group_rating: 21.65, members: [110], ratings: [21.65]},
+                 %{count: 1, group_rating: 21.6, members: [111], ratings: [21.6]},
+                 %{count: 1, group_rating: 18.46, members: [112], ratings: [18.46]},
+                 %{count: 1, group_rating: 17.7, members: [113], ratings: [17.7]},
+                 %{count: 1, group_rating: 16.29, members: [114], ratings: [16.29]},
+                 %{count: 1, group_rating: 16.01, members: [115], ratings: [16.01]}
+               ]
+             },
+             team_players: %{
+               1 => [104, 105, 106, 107, 110, 111, 114, 116],
+               2 => [101, 102, 103, 108, 109, 112, 113, 115]
+             },
+             team_sizes: %{1 => 8, 2 => 8},
+             means: %{1 => 31.0, 2 => 31.625},
+             stdevs: %{1 => 16.015617378046965, 2 => 15.090870584562046}
+           }
+  end
+
+  test "cheeky_switcher: bigger game group" do
     result =
       BalanceLib.create_balance(
         [
@@ -593,7 +657,7 @@ defmodule Teiserver.Battle.BalanceLibTest do
           %{116 => 8}
         ],
         2,
-        algorithm: :party_preserver,
+        algorithm: :cheeky_switcher,
         rating_lower_boundary: 5,
         rating_upper_boundary: 5,
         mean_diff_max: 5,
@@ -636,7 +700,7 @@ defmodule Teiserver.Battle.BalanceLibTest do
   end
 
   # @tag runnable: true
-  test "team_preserver: smurf party" do
+  test "cheeky_switcher: smurf party" do
     result =
       BalanceLib.create_balance(
         [
@@ -659,7 +723,7 @@ defmodule Teiserver.Battle.BalanceLibTest do
           %{116 => 8}
         ],
         2,
-        algorithm: :party_preserver
+        algorithm: :cheeky_switcher
       )
 
     assert Map.drop(result, [:logs, :time_taken]) == %{
@@ -696,7 +760,7 @@ defmodule Teiserver.Battle.BalanceLibTest do
   end
 
   # @tag runnable: true
-  test "team_preserver: stacked groups" do
+  test "cheeky_switcher: stacked groups" do
     result =
       BalanceLib.create_balance(
         [
@@ -711,7 +775,7 @@ defmodule Teiserver.Battle.BalanceLibTest do
           %{109 => 26},
         ],
         2,
-        algorithm: :party_preserver
+        algorithm: :cheeky_switcher
       )
 
     assert Map.drop(result, [:logs, :time_taken]) == %{
