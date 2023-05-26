@@ -115,6 +115,21 @@ defmodule Teiserver.Battle.BalanceUtil do
     Enum.flat_map(teams, fn {_k, team_groups} -> team_groups end)
   end
 
+  @spec count_parties([expanded_group()]) :: non_neg_integer()
+  def count_parties(groups) do
+    groups
+    |> Enum.filter(fn group -> group.count > 1 end)
+    |> length()
+  end
+
+  @spec count_parties([expanded_group()]) :: non_neg_integer()
+  def count_parties_in_teams(teams) do
+    teams
+    |> Map.values()
+    |> Enum.map(fn groups -> count_parties(groups) end)
+    |> Enum.sum()
+  end
+
   @spec has_parties(team_map()) :: boolean()
   def has_parties(teams) do
     teams
@@ -132,25 +147,158 @@ defmodule Teiserver.Battle.BalanceUtil do
     teams,
     team_a_id,
     group_a_index,
-    group_b_id,
+    team_b_id,
     group_b_index) do
     team_a_groups = teams[team_a_id]
     group_a = Enum.at(team_a_groups, group_a_index)
-    team_b_groups = teams[group_b_id]
+    team_b_groups = teams[team_b_id]
     group_b = Enum.at(team_b_groups, group_b_index)
 
     replace_team_group_at_index(teams, team_a_id, group_a_index, group_b)
-    |> replace_team_group_at_index(group_b_id, group_b_index, group_a)
+    |> replace_team_group_at_index(team_b_id, group_b_index, group_a)
+  end
+
+  @spec switch_group_pair_between_teams(team_map(), T.team_id(), non_neg_integer(), T.team_id(), [{expanded_group(), non_neg_integer()}]) :: team_map()
+  def switch_group_with_combo_between_teams(
+    teams,
+    team_a_id,
+    group_a_index,
+    team_b_id,
+    group_b_combo) do
+    team_a_groups = teams[team_a_id]
+    team_b_groups = teams[team_b_id]
+    group_a = Enum.at(team_a_groups, group_a_index)
+
+    team_a_without_group = List.delete_at(team_a_groups, group_a_index)
+
+    combo_indices = Enum.map(group_b_combo, fn {_, index} -> index end)
+    combo_groups = Enum.map(group_b_combo, fn {group, _} -> group end)
+    team_b_groups_without_combo = team_b_groups
+    |> Enum.with_index()
+    |> Enum.reject(fn {_, index} -> index in combo_indices end)
+    |> Enum.map(fn {element, _} -> element end)
+
+    teams
+    |> Map.put(team_a_id, team_a_without_group ++ combo_groups)
+    |> Map.put(team_b_id, team_b_groups_without_combo ++ [group_a])
+  end
+
+  @spec switch_group_combos_between_teams(
+    team_map(),
+    T.team_id(),
+    [{expanded_group(), non_neg_integer()}],
+    T.team_id(),
+    [{expanded_group(), non_neg_integer()}]) :: team_map()
+  def switch_group_combos_between_teams(
+    teams,
+    team_a_id,
+    group_a_combo,
+    team_b_id,
+    group_b_combo) do
+    team_a_groups = teams[team_a_id]
+    team_b_groups = teams[team_b_id]
+
+    {combo_a_groups, combo_a_indices} = Enum.unzip(group_a_combo)
+    team_a_groups_without_combo = team_a_groups
+    |> Enum.with_index()
+    |> Enum.reject(fn {_, index} -> index in combo_a_indices end)
+    |> Enum.map(fn {element, _} -> element end)
+
+    {combo_b_groups, combo_b_indices} = Enum.unzip(group_b_combo)
+    team_b_groups_without_combo = team_b_groups
+    |> Enum.with_index()
+    |> Enum.reject(fn {_, index} -> index in combo_b_indices end)
+    |> Enum.map(fn {element, _} -> element end)
+
+    IO.inspect(%{
+      group_b_combo: group_b_combo,
+      group_a_combo: group_a_combo,
+      team_a_groups_without_combo: team_a_groups_without_combo,
+      combo_b_groups: combo_b_groups,
+      team_b_groups_without_combo: team_b_groups_without_combo,
+      combo_a_groups: combo_a_groups
+    }, label: "switch_group_combos_between_teams")
+    teams
+    |> Map.put(team_a_id, team_a_groups_without_combo ++ combo_b_groups)
+    |> Map.put(team_b_id, team_b_groups_without_combo ++ combo_a_groups)
   end
 
   @spec lowest_highest_rated_teams(team_map()) :: {{T.team_id(), non_neg_integer()}, {T.team_id(), non_neg_integer()}}
   def lowest_highest_rated_teams(teams) do
     teams
-    |> IO.inspect()
     |> Enum.map(fn {team_id, team_groups} ->
       {team_id, sum_group_rating(team_groups)}
     end)
-    |> IO.inspect()
     |> Enum.min_max_by(fn {_team_id, rating} -> rating end)
+  end
+
+  @spec make_group_combinations([expanded_group()], non_neg_integer(), boolean()) :: [[{expanded_group(), non_neg_integer()}]]
+  def make_group_combinations([], _match_member_count) do [] end
+  def make_group_combinations(_groups, 0) do [] end
+  def make_group_combinations(groups, match_member_count) do make_group_combinations(groups, match_member_count, false) end
+  def make_group_combinations(groups, match_member_count, include_smaller_combos) do
+    groups_with_index = Enum.with_index(groups)
+
+    # Find all combinations of all groups that could possibly combine to make a match
+    1..match_member_count
+    |> Enum.map(fn i ->
+      # This allows us to combine uneven sized groups, we will later just filter out the ones
+      # that don't match the match_member_count
+      group_indicies_of_size_i = groups_with_index
+      |> Enum.filter(fn {group, _index} -> group.count <= i end)
+      |> Enum.map(fn {_group, index} -> index end)
+      combine(group_indicies_of_size_i, match_member_count - i + 1)
+      end)
+    |> Enum.flat_map(fn group_combos -> group_combos end)
+    |> Enum.filter(fn combo_of_indicies -> length(combo_of_indicies) > 0 end)
+    |> Enum.uniq_by(fn combo_of_indicies -> combo_of_indicies
+      |> Enum.map(fn i -> to_string(i) end)
+      |> Enum.join("-")
+      end)
+    |> Enum.map(fn combo_of_indicies -> Enum.filter(groups_with_index, fn {_g, i} -> i in combo_of_indicies end)
+    end)
+    # Only keep the combinations that have the right number of total members
+    |> Enum.filter(
+      fn group_combo ->
+        total_members = Enum.sum(Enum.map(group_combo, fn {group, _index} -> group.count end))
+        if include_smaller_combos do
+          total_members <= match_member_count
+        else
+          total_members == match_member_count
+        end
+      end)
+  end
+
+  # Copied from https://github.com/seantanly/elixir-combination/blob/v0.0.3/lib/combination.ex#L1
+  @spec combine(Enum.t, non_neg_integer) :: [list]
+  def combine(collection, k) when is_integer(k) and k >= 0 do
+    list = Enum.to_list(collection)
+    list_length = Enum.count(list)
+    if k > list_length do
+      []
+    else
+      do_combine(list, list_length, k, [], [])
+    end
+  end
+  defp do_combine(_list, _list_length, 0, _pick_acc, _acc), do: [[]]
+  defp do_combine(list, _list_length, 1, _pick_acc, _acc), do: list |> Enum.map(&([&1])) # optimization
+  defp do_combine(list, list_length, k, pick_acc, acc) do
+    list
+    |> Stream.unfold(fn [h | t] -> {{h, t}, t} end)
+    |> Enum.take(list_length)
+    |> Enum.reduce(acc, fn {x, sublist}, acc ->
+      sublist_length = Enum.count(sublist)
+      pick_acc_length = Enum.count(pick_acc)
+      if k > pick_acc_length + 1 + sublist_length do
+        acc # insufficient elements in sublist to generate new valid combinations
+      else
+        new_pick_acc = [x | pick_acc]
+        new_pick_acc_length = pick_acc_length + 1
+        case new_pick_acc_length do
+          ^k -> [new_pick_acc | acc]
+          _  -> do_combine(sublist, sublist_length, k, new_pick_acc, acc)
+        end
+      end
+    end)
   end
 end

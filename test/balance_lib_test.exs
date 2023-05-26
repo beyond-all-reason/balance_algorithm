@@ -448,7 +448,7 @@ defmodule Teiserver.Battle.BalanceLibTest do
            }
   end
 
-  test "optimistic: team ffa" do
+  test "team_preserver: team ffa" do
     result =
       BalanceLib.create_balance(
         [
@@ -460,7 +460,7 @@ defmodule Teiserver.Battle.BalanceLibTest do
           %{6 => 9}
         ],
         3,
-        algorithm: :party_preserver,
+        algorithm: :party_preserver
       )
       |> Map.drop([:logs, :time_taken])
 
@@ -505,7 +505,7 @@ defmodule Teiserver.Battle.BalanceLibTest do
            }
   end
 
-  test "optimistic: two parties" do
+  test "team_preserver: two parties" do
     result =
       BalanceLib.create_balance(
         [
@@ -567,7 +567,8 @@ defmodule Teiserver.Battle.BalanceLibTest do
            }
   end
 
-  test "optimistic: bigger game group" do
+  @tag runnable: true
+  test "team_preserver: bigger game group" do
     result =
       BalanceLib.create_balance(
         [
@@ -634,7 +635,8 @@ defmodule Teiserver.Battle.BalanceLibTest do
            }
   end
 
-  test "optimistic: smurf party" do
+  # @tag runnable: true
+  test "team_preserver: smurf party" do
     result =
       BalanceLib.create_balance(
         [
@@ -658,6 +660,110 @@ defmodule Teiserver.Battle.BalanceLibTest do
         ],
         2,
         algorithm: :party_preserver
+      )
+
+    assert Map.drop(result, [:logs, :time_taken]) == %{
+             captains: %{1 => 101, 2 => 104},
+             deviation: 0,
+             ratings: %{1 => 184, 2 => 184},
+             team_groups: %{
+               1 => [
+                 %{count: 1, group_rating: 51, members: [101], ratings: [51]},
+                 %{count: 1, group_rating: 29, members: [106], ratings: [29]},
+                 %{count: 1, group_rating: 27, members: [108], ratings: [27]},
+                 %{count: 1, group_rating: 25, members: [110], ratings: [25]},
+                 %{count: 1, group_rating: 19, members: [112], ratings: [19]},
+                 %{count: 1, group_rating: 15, members: [114], ratings: [15]},
+                 %{count: 1, group_rating: 10, members: [102], ratings: [10]},
+                 %{count: 1, group_rating: 8, members: [116], ratings: [8]}
+               ],
+               2 => [
+                 %{count: 1, group_rating: 35, members: [104], ratings: '#'},
+                 %{count: 1, group_rating: 34, members: [105], ratings: [34]},
+                 %{count: 1, group_rating: 28, members: [107], ratings: [28]},
+                 %{count: 1, group_rating: 26, members: [109], ratings: [26]},
+                 %{count: 1, group_rating: 21, members: [111], ratings: [21]},
+                 %{count: 1, group_rating: 16, members: [113], ratings: [16]},
+                 %{count: 1, group_rating: 14, members: [115], ratings: [14]},
+                 %{count: 1, group_rating: 10, members: [103], ratings: '\n'}
+               ]
+             },
+             team_players: %{1 => 'ejlnprft', 2 => 'hikmoqsg'},
+             team_sizes: %{1 => 8, 2 => 8},
+             means: %{1 => 23.0, 2 => 23.0},
+             stdevs: %{1 => 12.816005617976296, 2 => 8.674675786448736}
+           }
+  end
+
+  # @tag runnable: true
+  test "team_preserver: stacked groups" do
+    result =
+      BalanceLib.create_balance(
+        [
+          %{101 => 11, 102 => 10, 103 => 10, 104 => 35},
+          %{110 => 25, 111 => 21, 112 => 19, 113 => 16},
+          %{114 => 15, 115 => 14, 116 => 8},
+
+          %{105 => 34},
+          %{106 => 29},
+          %{107 => 28},
+          %{108 => 27},
+          %{109 => 26},
+        ],
+        2,
+        algorithm: :party_preserver
+      )
+
+    assert Map.drop(result, [:logs, :time_taken]) == %{
+             captains: %{1 => 101, 2 => 104},
+             deviation: 0,
+             ratings: %{1 => 184, 2 => 184},
+             team_groups: %{
+               1 => [
+                 %{count: 1, group_rating: 51, members: [101], ratings: [51]},
+                 %{count: 1, group_rating: 29, members: [106], ratings: [29]},
+                 %{count: 1, group_rating: 27, members: [108], ratings: [27]},
+                 %{count: 1, group_rating: 25, members: [110], ratings: [25]},
+                 %{count: 1, group_rating: 19, members: [112], ratings: [19]},
+                 %{count: 1, group_rating: 15, members: [114], ratings: [15]},
+                 %{count: 1, group_rating: 10, members: [102], ratings: [10]},
+                 %{count: 1, group_rating: 8, members: [116], ratings: [8]}
+               ],
+               2 => [
+                 %{count: 1, group_rating: 35, members: [104], ratings: '#'},
+                 %{count: 1, group_rating: 34, members: [105], ratings: [34]},
+                 %{count: 1, group_rating: 28, members: [107], ratings: [28]},
+                 %{count: 1, group_rating: 26, members: [109], ratings: [26]},
+                 %{count: 1, group_rating: 21, members: [111], ratings: [21]},
+                 %{count: 1, group_rating: 16, members: [113], ratings: [16]},
+                 %{count: 1, group_rating: 14, members: [115], ratings: [14]},
+                 %{count: 1, group_rating: 10, members: [103], ratings: '\n'}
+               ]
+             },
+             team_players: %{1 => 'ejlnprft', 2 => 'hikmoqsg'},
+             team_sizes: %{1 => 8, 2 => 8},
+             means: %{1 => 23.0, 2 => 23.0},
+             stdevs: %{1 => 12.816005617976296, 2 => 8.674675786448736}
+           }
+  end
+
+  # @tag runnable: true
+  test "loser_picks: stacked groups" do
+    result =
+      BalanceLib.create_balance(
+        [
+          %{101 => 11, 102 => 10, 103 => 10, 104 => 35},
+          %{110 => 25, 111 => 21, 112 => 19, 113 => 16},
+          %{114 => 15, 115 => 14, 116 => 8},
+
+          %{105 => 34},
+          %{106 => 29},
+          %{107 => 28},
+          %{108 => 27},
+          %{109 => 26},
+        ],
+        2,
+        algorithm: :loser_picks
       )
 
     assert Map.drop(result, [:logs, :time_taken]) == %{
