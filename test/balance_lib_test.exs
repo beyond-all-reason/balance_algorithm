@@ -925,6 +925,28 @@ defmodule Teiserver.Battle.BalanceLibTest do
     end)
   end
 
+  def parties_preserved(original_groups, result_simple_teams) do
+    original_parties = original_groups
+    |> Enum.filter(fn group -> length(group) > 1 end)
+
+    original_party_count = length(original_parties)
+
+    preserved_parties = result_simple_teams
+    |> Stream.flat_map(& &1)
+    |> Enum.filter(fn group -> length(group) > 1 end)
+    |> Enum.filter(fn group ->
+      Enum.find(original_parties, fn party ->
+        Enum.all?(party, fn member_ratings ->
+          member_ratings in group
+        end)
+      end)
+    end)
+
+    preserved_parties_count = length(preserved_parties)
+
+    "Preserved parties: #{preserved_parties_count} / #{original_party_count}"
+  end
+
   def compare_algorithms(parties, team_count, test_name) do
     party_map_list = parties
     |> Enum.with_index()
@@ -967,10 +989,12 @@ defmodule Teiserver.Battle.BalanceLibTest do
       stdevs: result_loser_picks.stdevs,
       time_taken: result_loser_picks.time_taken,
       team_groups: simple_teams(result_loser_picks.team_groups),
+      parties: parties_preserved(parties, simple_teams(result_loser_picks.team_groups)),
       # team_groups_full: result_loser_picks.team_groups,
       # logs: result_loser_picks.logs
     }, label: "#{test_name}: loser_picks", charlists: :as_lists)
 
+    IO.inspect(result_cheeky_switcher.logs, label: "#{test_name}: cheeky_switcher logs", charlists: :as_strings)
     IO.inspect(%{
       deviation: result_cheeky_switcher.deviation,
       ratings: result_cheeky_switcher.ratings,
@@ -978,8 +1002,8 @@ defmodule Teiserver.Battle.BalanceLibTest do
       stdevs: result_cheeky_switcher.stdevs,
       time_taken: result_cheeky_switcher.time_taken,
       team_groups: simple_teams(result_cheeky_switcher.team_groups),
+      parties: parties_preserved(parties, simple_teams(result_cheeky_switcher.team_groups)),
       # team_groups_full: result_cheeky_switcher.team_groups,
-      # logs: result_cheeky_switcher.logs,
     }, label: "#{test_name}: cheeky_switcher", charlists: :as_lists)
 
     IO.inspect(%{
@@ -988,7 +1012,8 @@ defmodule Teiserver.Battle.BalanceLibTest do
       means: result_brute_force.means,
       stdevs: result_brute_force.stdevs,
       time_taken: result_brute_force.time_taken,
-      team_groups: simple_teams(result_brute_force.team_groups)
+      team_groups: simple_teams(result_brute_force.team_groups),
+      parties: parties_preserved(parties, simple_teams(result_brute_force.team_groups)),
     }, label: "#{test_name}: brute_force", charlists: :as_lists)
 
     assert result_cheeky_switcher.deviation <= result_loser_picks.deviation

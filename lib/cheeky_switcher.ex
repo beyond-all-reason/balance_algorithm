@@ -7,6 +7,7 @@ defmodule Teiserver.Battle.CheekySwitcherAlgorithm do
   @type team_map :: BalanceUtils.team_map
   @type group_list :: [expanded_group_or_pair()]
 
+  @spec acceptable_teams(%{optional(any) => [map]}) :: boolean
   def acceptable_teams(teams) do
     total_ratings = teams
     |> Enum.map(fn {_k, groups} -> sum_group_rating(groups) end)
@@ -16,7 +17,7 @@ defmodule Teiserver.Battle.CheekySwitcherAlgorithm do
     percentage_diff = 100 * rating_diff / total_ratings
 
     # IO.inspect(percentage_diff, label: "Acceptable teams? #{rating_diff} / #{total_ratings} percentage diff:")
-    percentage_diff < 5
+    {percentage_diff < 5, rating_diff, percentage_diff}
   end
 
   @spec cheeky_switcher(
@@ -30,25 +31,27 @@ defmodule Teiserver.Battle.CheekySwitcherAlgorithm do
 
   def do_cheeky_switcher(expanded_groups, team_count, opts, log) do
     {teams, log} = expanded_groups
-    |> sort_groups_by_rating()
+    # |> sort_groups_by_rating()
+    |> sort_groups_by_count()
     # |> IO.inspect(label: "Sorted by rating", charlists: :as_lists)
     |> place_groups_to_smallest_teams(make_empty_teams(team_count), log)
     # |> IO.inspect(label: "Placed groups", charlists: :as_lists)
     |> switch_best_rating_diffs()
 
-    rating_diff = max_team_rating_difference(teams)
+    {is_acceptable, rating_diff, percentage_diff} = acceptable_teams(teams)
+
     parties_left = count_parties_in_teams(teams)
 
     # IO.inspect(teams, label: "Switched all groups, current diff: #{rating_diff}, parties left: #{parties_left}", charlists: :as_lists)
 
-    if acceptable_teams(teams) or parties_left <= 0 do
-      {teams, log}
+    if is_acceptable or parties_left <= 0 do
+      {teams, log  ++ ["Acceptable rating difference of #{rating_diff} (#{percentage_diff} %)."]}
     else
       do_cheeky_switcher(
         teams_to_groups_without_largest_party(teams),
         team_count,
         opts,
-        log ++ ["Unacceptable rating difference of #{max_team_rating_difference(teams)} with current parties, retrying without largest party"])
+        log ++ ["Unacceptable rating difference of #{rating_diff} (#{percentage_diff} %) with current parties, retrying without largest party"])
     end
   end
 
@@ -85,23 +88,33 @@ defmodule Teiserver.Battle.CheekySwitcherAlgorithm do
           combo_switch_diff: combo_switch_diff,
           best_diff: best_diff
         } ->
-          # lowest_combo_indices = lowest_team_combo
-          #   |> Enum.map(fn {_g, i} -> to_string(i) end)
-          #   |> Enum.join(", ")
+          lowest_combo_indices = lowest_team_combo
+            |> Enum.map(fn {_g, i} -> to_string(i) end)
+            |> Enum.join(", ")
 
-          # highest_combo_indices = highest_team_combo
-          #   |> Enum.map(fn {_g, i} -> to_string(i) end)
-          #   |> Enum.join(", ")
+          highest_combo_indices = highest_team_combo
+            |> Enum.map(fn {_g, i} -> to_string(i) end)
+            |> Enum.join(", ")
 
           # Found a pair, so switch them
           # IO.inspect( %{ highest_team_id: highest_team_id, highest_team_combo: highest_team_combo, lowest_team_id: lowest_team_id, lowest_team_combo: lowest_team_combo, combo_switch_diff: combo_switch_diff, best_diff: best_diff, teams: teams, highest_combo_indices: highest_combo_indices, lowest_combo_indices: lowest_combo_indices, }, label: "Best pair to switch", charlists: :as_lists)
 
           lowest_team_members = lowest_team_combo
-          |> Enum.map(fn {group, _} -> group.members end)
+          |> Enum.map(fn {group, _} ->
+            group.members
+            |> Enum.with_index()
+            |> Enum.map(fn {member, i} -> "#{member}[#{Enum.at(group.ratings,i)}]" end)
+          end)
           |> List.flatten()
+          |> Enum.join(",")
         highest_team_members = highest_team_combo
-          |> Enum.map(fn {group, _} -> group.members end)
+          |> Enum.map(fn {group, _} ->
+            group.members
+            |> Enum.with_index()
+            |> Enum.map(fn {member, i} -> "#{member}[#{Enum.at(group.ratings,i)}]" end)
+          end)
           |> List.flatten()
+          |> Enum.join(",")
 
           # Switch the best pair
           {switch_group_combos_between_teams(
@@ -111,7 +124,7 @@ defmodule Teiserver.Battle.CheekySwitcherAlgorithm do
             lowest_team_id,
             lowest_team_combo
           ),
-          log ++ ["Switched groups #{lowest_team_members} from team #{lowest_team_id} with groups #{highest_team_members} from team #{highest_team_id}"]}
+          log ++ ["Switched users #{lowest_team_members} from team #{lowest_team_id} with users #{highest_team_members} from team #{highest_team_id}"]}
       end
     end
   end
@@ -247,7 +260,8 @@ defmodule Teiserver.Battle.CheekySwitcherAlgorithm do
     # Break up the first and largest party
     |> break_up_first_party()
     # Sort again by rating
-    |> sort_groups_by_rating()
+    # |> sort_groups_by_rating()
+    |> sort_groups_by_count()
   end
 
   defp break_up_first_party([]) do
