@@ -511,25 +511,20 @@ defmodule Teiserver.Battle.BalanceLibTest do
     result =
       BalanceLib.create_balance(
         [
-          # Our high tier party
-          %{101 => 9.39, 102 => 15.14},
-
-          # Our other high tier party
-          %{103 => 28.84, 104 => 15.06},
-
-          # Other players, a range of ratings
-          %{105 => 43.69},
-          %{106 => 29.56},
-          %{107 => 28.27},
-          %{108 => 25.34},
-          %{109 => 23.45},
-          %{110 => 21.65},
-          %{111 => 21.6},
-          %{112 => 18.46},
-          %{113 => 17.7},
-          %{114 => 16.29},
-          %{115 => 16.01},
-          %{116 => 10.27}
+          %{:hitman => 9.39, :kayme => 15.14},
+          %{:eural => 28.84, :morgan => 15.06},
+          %{:zerpiderp => 43.69},
+          %{:gabb => 29.56},
+          %{:flaka => 28.27},
+          %{:gegx001 => 25.34},
+          %{:lordvenom1 => 23.45},
+          %{:notlobsters => 21.65},
+          %{:trimbil => 21.6},
+          %{:redspatula => 18.46},
+          %{:claaay => 17.7},
+          %{:korbal22 => 16.29},
+          %{:p4r0 => 16.01},
+          %{:amadeuz => 10.27}
         ],
         2,
         algorithm: :cheeky_switcher
@@ -569,30 +564,25 @@ defmodule Teiserver.Battle.BalanceLibTest do
            }
   end
 
-  @tag runnable: true
+  # @tag runnable: true
   test "loser_picks: MasterBel2 case" do
     result =
       BalanceLib.create_balance(
         [
-          # Our high tier party
-          %{101 => 9.39, 102 => 15.14},
-
-          # Our other high tier party
-          %{103 => 28.84, 104 => 15.06},
-
-          # Other players, a range of ratings
-          %{105 => 43.69},
-          %{106 => 29.56},
-          %{107 => 28.27},
-          %{108 => 25.34},
-          %{109 => 23.45},
-          %{110 => 21.65},
-          %{111 => 21.6},
-          %{112 => 18.46},
-          %{113 => 17.7},
-          %{114 => 16.29},
-          %{115 => 16.01},
-          %{116 => 10.27}
+          %{:hitman => 9.39, :kayme => 15.14},
+          %{:eural => 28.84, :morgan => 15.06},
+          %{:zerpiderp => 43.69},
+          %{:gabb => 29.56},
+          %{:flaka => 28.27},
+          %{:gegx001 => 25.34},
+          %{:lordvenom1 => 23.45},
+          %{:notlobsters => 21.65},
+          %{:trimbil => 21.6},
+          %{:redspatula => 18.46},
+          %{:claaay => 17.7},
+          %{:korbal22 => 16.29},
+          %{:p4r0 => 16.01},
+          %{:amadeuz => 10.27}
         ],
         2,
         algorithm: :loser_picks
@@ -637,25 +627,20 @@ defmodule Teiserver.Battle.BalanceLibTest do
     result =
       BalanceLib.create_balance(
         [
-          # Our high tier party
-          %{101 => 9.39, 102 => 15.14},
-
-          # Our other high tier party
-          %{103 => 28.84, 104 => 15.06},
-
-          # Other players, a range of ratings
-          %{105 => 43.69},
-          %{106 => 29.56},
-          %{107 => 28.27},
-          %{108 => 25.34},
-          %{109 => 23.45},
-          %{110 => 21.65},
-          %{111 => 21.6},
-          %{112 => 18.46},
-          %{113 => 17.7},
-          %{114 => 16.29},
-          %{115 => 16.01},
-          %{116 => 10.27}
+          %{:hitman => 9.39, :kayme => 15.14},
+          %{:eural => 28.84, :morgan => 15.06},
+          %{:zerpiderp => 43.69},
+          %{:gabb => 29.56},
+          %{:flaka => 28.27},
+          %{:gegx001 => 25.34},
+          %{:lordvenom1 => 23.45},
+          %{:notlobsters => 21.65},
+          %{:trimbil => 21.6},
+          %{:redspatula => 18.46},
+          %{:claaay => 17.7},
+          %{:korbal22 => 16.29},
+          %{:p4r0 => 16.01},
+          %{:amadeuz => 10.27}
         ],
         2,
         algorithm: :brute_force
@@ -947,7 +932,7 @@ defmodule Teiserver.Battle.BalanceLibTest do
       party
       |> Enum.with_index()
       |> Enum.map(fn {rating, member_index} ->
-        {index * 100 + member_index, rating}
+        {index * 10 + member_index, rating}
       end)
       |> Map.new()
     end)
@@ -982,7 +967,8 @@ defmodule Teiserver.Battle.BalanceLibTest do
       stdevs: result_loser_picks.stdevs,
       time_taken: result_loser_picks.time_taken,
       team_groups: simple_teams(result_loser_picks.team_groups),
-      team_groups_full: result_loser_picks.team_groups
+      # team_groups_full: result_loser_picks.team_groups,
+      # logs: result_loser_picks.logs
     }, label: "#{test_name}: loser_picks", charlists: :as_lists)
 
     IO.inspect(%{
@@ -992,7 +978,8 @@ defmodule Teiserver.Battle.BalanceLibTest do
       stdevs: result_cheeky_switcher.stdevs,
       time_taken: result_cheeky_switcher.time_taken,
       team_groups: simple_teams(result_cheeky_switcher.team_groups),
-      team_groups_full: result_cheeky_switcher.team_groups
+      # team_groups_full: result_cheeky_switcher.team_groups,
+      # logs: result_cheeky_switcher.logs,
     }, label: "#{test_name}: cheeky_switcher", charlists: :as_lists)
 
     IO.inspect(%{
@@ -1010,7 +997,7 @@ defmodule Teiserver.Battle.BalanceLibTest do
     assert result_cheeky_switcher.time_taken <= result_brute_force.time_taken
   end
 
-  # @tag runnable: true
+  @tag runnable: true
   test "Compare algorithms stacked groups" do
     parties = [
       [11, 10, 10, 35],
@@ -1025,7 +1012,7 @@ defmodule Teiserver.Battle.BalanceLibTest do
     compare_algorithms(parties, 2, "stacked groups")
   end
 
-  # @tag runnable: true
+  @tag runnable: true
   test "Compare algorithms MasterBel2 case" do
     parties = [
       [9.39, 15.14],
@@ -1059,7 +1046,7 @@ defmodule Teiserver.Battle.BalanceLibTest do
     compare_algorithms(parties, 3, "team_ffa")
   end
 
-  # @tag runnable: true
+  @tag runnable: true
   test "Compare algorithms: smurf party" do
     parties = [
        # Our smurf party

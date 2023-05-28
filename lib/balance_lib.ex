@@ -57,11 +57,9 @@ defmodule Teiserver.Battle.BalanceLib do
       end)
 
     # raise "Call"
-    IO.inspect(opts, label: "opts")
     {team_groups, logs} =
       case opts[:algorithm] || :loser_picks do
         :loser_picks ->
-          IO.inspect("Running loser picks")
           LoserPicksAlgorithm.loser_picks(expanded_groups, team_count, opts)
         :cheeky_switcher ->
           CheekySwitcherAlgorithm.cheeky_switcher(expanded_groups, team_count, opts)
