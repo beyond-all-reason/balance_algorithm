@@ -7,6 +7,7 @@ defmodule Teiserver.Battle.BalanceLib do
   alias Teiserver.Game.MatchRatingLib
   alias Teiserver.Battle.LoserPicksAlgorithm
   alias Teiserver.Battle.CheekySwitcherAlgorithm
+  alias Teiserver.Battle.BruteForceAlgorithm
   import Central.Helpers.NumberHelper, only: [int_parse: 1]
   import Teiserver.Battle.BalanceUtil
 
@@ -55,12 +56,17 @@ defmodule Teiserver.Battle.BalanceLib do
         }
       end)
 
+    # raise "Call"
+    IO.inspect(opts, label: "opts")
     {team_groups, logs} =
       case opts[:algorithm] || :loser_picks do
+        :loser_picks ->
+          IO.inspect("Running loser picks")
+          LoserPicksAlgorithm.loser_picks(expanded_groups, team_count, opts)
         :cheeky_switcher ->
           CheekySwitcherAlgorithm.cheeky_switcher(expanded_groups, team_count, opts)
-        :loser_picks ->
-          LoserPicksAlgorithm.loser_picks(expanded_groups, team_count, opts)
+        :brute_force ->
+          BruteForceAlgorithm.brute_force_dont_use_in_production_for_the_love_of_bar(expanded_groups, team_count, opts)
       end
 
     team_players =

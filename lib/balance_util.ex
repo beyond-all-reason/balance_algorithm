@@ -80,6 +80,8 @@ defmodule Teiserver.Battle.BalanceUtil do
   end
 
   @spec max_team_rating_difference(team_map()) :: non_neg_integer()
+  def max_team_rating_difference([]) do 0 end
+  def max_team_rating_difference([_team]) do 0 end
   def max_team_rating_difference(teams) do
     teams
     |> Enum.map(fn {_k, team_groups} -> sum_group_rating(team_groups) end)
@@ -128,6 +130,21 @@ defmodule Teiserver.Battle.BalanceUtil do
     |> Map.values()
     |> Enum.map(fn groups -> count_parties(groups) end)
     |> Enum.sum()
+  end
+
+  def team_ratings(teams) do
+    teams
+    |> Enum.map(fn {_id, groups} -> sum_group_rating(groups) end)
+  end
+
+  def team_means(teams) do
+    teams
+    |> Enum.map(fn {_id, groups} -> sum_group_rating(groups) / sum_group_membership_size(groups) end)
+  end
+
+  def team_stddevs(teams) do
+    teams
+    |> Enum.map(fn {_id, groups} -> Statistics.stdev(Enum.flat_map(groups, fn group -> group.ratings end)) end)
   end
 
   @spec has_parties(team_map()) :: boolean()
@@ -210,14 +227,14 @@ defmodule Teiserver.Battle.BalanceUtil do
     |> Enum.reject(fn {_, index} -> index in combo_b_indices end)
     |> Enum.map(fn {element, _} -> element end)
 
-    IO.inspect(%{
-      group_b_combo: group_b_combo,
-      group_a_combo: group_a_combo,
-      team_a_groups_without_combo: team_a_groups_without_combo,
-      combo_b_groups: combo_b_groups,
-      team_b_groups_without_combo: team_b_groups_without_combo,
-      combo_a_groups: combo_a_groups
-    }, label: "switch_group_combos_between_teams")
+    # IO.inspect(%{
+    #   group_b_combo: group_b_combo,
+    #   group_a_combo: group_a_combo,
+    #   team_a_groups_without_combo: team_a_groups_without_combo,
+    #   combo_b_groups: combo_b_groups,
+    #   team_b_groups_without_combo: team_b_groups_without_combo,
+    #   combo_a_groups: combo_a_groups
+    # }, label: "switch_group_combos_between_teams")
     teams
     |> Map.put(team_a_id, team_a_groups_without_combo ++ combo_b_groups)
     |> Map.put(team_b_id, team_b_groups_without_combo ++ combo_a_groups)

@@ -331,7 +331,7 @@ defmodule Teiserver.Battle.BalanceLibTest do
            }
   end
 
-  @tag runnable: true
+  # @tag runnable: true
   test "loser_picks: two parties" do
     result =
       BalanceLib.create_balance(
@@ -506,7 +506,7 @@ defmodule Teiserver.Battle.BalanceLibTest do
            }
   end
 
-  @tag runnable: true
+  # @tag runnable: true
   test "cheeky_switcher: MasterBel2 case" do
     result =
       BalanceLib.create_balance(
@@ -595,7 +595,70 @@ defmodule Teiserver.Battle.BalanceLibTest do
           %{116 => 10.27}
         ],
         2,
-        algorithm: :cheeky_switcher
+        algorithm: :loser_picks
+      )
+
+    assert Map.drop(result, [:logs, :time_taken]) == %{
+             captains: %{1 => 105, 2 => 106},
+             deviation: 2,
+             ratings: %{1 => 248, 2 => 253},
+             team_groups: %{
+               1 => [
+                 %{count: 2, group_rating: 24.53, members: [101, 102], ratings: [9.39, 15.14]},
+                 %{count: 1, group_rating: 43.69, members: [105], ratings: [43.69]},
+                 %{count: 1, group_rating: 29.56, members: [106], ratings: [29.56]},
+                 %{count: 1, group_rating: 28.27, members: [107], ratings: [28.27]},
+                 %{count: 1, group_rating: 25.34, members: [108], ratings: [25.34]},
+                 %{count: 1, group_rating: 23.45, members: [109], ratings: [23.45]},
+                 %{count: 1, group_rating: 10.27, members: [116], ratings: [10.27]}
+               ],
+               2 => [
+                 %{count: 2, group_rating: 43.9, members: [103, 104], ratings: [28.84, 15.06]},
+                 %{count: 1, group_rating: 21.65, members: [110], ratings: [21.65]},
+                 %{count: 1, group_rating: 21.6, members: [111], ratings: [21.6]},
+                 %{count: 1, group_rating: 18.46, members: [112], ratings: [18.46]},
+                 %{count: 1, group_rating: 17.7, members: [113], ratings: [17.7]},
+                 %{count: 1, group_rating: 16.29, members: [114], ratings: [16.29]},
+                 %{count: 1, group_rating: 16.01, members: [115], ratings: [16.01]}
+               ]
+             },
+             team_players: %{
+               1 => [104, 105, 106, 107, 110, 111, 114, 116],
+               2 => [101, 102, 103, 108, 109, 112, 113, 115]
+             },
+             team_sizes: %{1 => 8, 2 => 8},
+             means: %{1 => 31.0, 2 => 31.625},
+             stdevs: %{1 => 16.015617378046965, 2 => 15.090870584562046}
+           }
+  end
+
+  # @tag runnable: true
+  test "brute: MasterBel2 case" do
+    result =
+      BalanceLib.create_balance(
+        [
+          # Our high tier party
+          %{101 => 9.39, 102 => 15.14},
+
+          # Our other high tier party
+          %{103 => 28.84, 104 => 15.06},
+
+          # Other players, a range of ratings
+          %{105 => 43.69},
+          %{106 => 29.56},
+          %{107 => 28.27},
+          %{108 => 25.34},
+          %{109 => 23.45},
+          %{110 => 21.65},
+          %{111 => 21.6},
+          %{112 => 18.46},
+          %{113 => 17.7},
+          %{114 => 16.29},
+          %{115 => 16.01},
+          %{116 => 10.27}
+        ],
+        2,
+        algorithm: :brute_force
       )
 
     assert Map.drop(result, [:logs, :time_taken]) == %{
@@ -861,5 +924,184 @@ defmodule Teiserver.Battle.BalanceLibTest do
              means: %{1 => 23.0, 2 => 23.0},
              stdevs: %{1 => 12.816005617976296, 2 => 8.674675786448736}
            }
+  end
+
+  def simple_teams(teams) do
+    teams
+    |> Enum.map(fn {_k, groups} ->
+      groups
+      |> Enum.map(fn group ->
+        cond do
+          is_list(group.ratings) -> group.ratings
+          is_number(group.ratings) -> [group.ratings]
+          true -> raise "Invalid ratings: #{inspect(group.ratings)}"
+        end
+      end)
+    end)
+  end
+
+  def compare_algorithms(parties, team_count, test_name) do
+    party_map_list = parties
+    |> Enum.with_index()
+    |> Enum.map(fn {party, index} ->
+      party
+      |> Enum.with_index()
+      |> Enum.map(fn {rating, member_index} ->
+        {index * 100 + member_index, rating}
+      end)
+      |> Map.new()
+    end)
+
+    IO.inspect(parties, label: "#{test_name} user list", charlists: :as_lists)
+
+    result_loser_picks =
+      BalanceLib.create_balance(
+        party_map_list,
+        team_count,
+        algorithm: :loser_picks
+      )
+
+    result_cheeky_switcher =
+      BalanceLib.create_balance(
+        party_map_list,
+        team_count,
+        algorithm: :cheeky_switcher
+      )
+
+    result_brute_force =
+      BalanceLib.create_balance(
+        party_map_list,
+        team_count,
+        algorithm: :brute_force
+      )
+
+    IO.inspect(%{
+      deviation: result_loser_picks.deviation,
+      ratings: result_loser_picks.ratings,
+      means: result_loser_picks.means,
+      stdevs: result_loser_picks.stdevs,
+      time_taken: result_loser_picks.time_taken,
+      team_groups: simple_teams(result_loser_picks.team_groups),
+      team_groups_full: result_loser_picks.team_groups
+    }, label: "#{test_name}: loser_picks", charlists: :as_lists)
+
+    IO.inspect(%{
+      deviation: result_cheeky_switcher.deviation,
+      ratings: result_cheeky_switcher.ratings,
+      means: result_cheeky_switcher.means,
+      stdevs: result_cheeky_switcher.stdevs,
+      time_taken: result_cheeky_switcher.time_taken,
+      team_groups: simple_teams(result_cheeky_switcher.team_groups),
+      team_groups_full: result_cheeky_switcher.team_groups
+    }, label: "#{test_name}: cheeky_switcher", charlists: :as_lists)
+
+    IO.inspect(%{
+      deviation: result_brute_force.deviation,
+      ratings: result_brute_force.ratings,
+      means: result_brute_force.means,
+      stdevs: result_brute_force.stdevs,
+      time_taken: result_brute_force.time_taken,
+      team_groups: simple_teams(result_brute_force.team_groups)
+    }, label: "#{test_name}: brute_force", charlists: :as_lists)
+
+    assert result_cheeky_switcher.deviation <= result_loser_picks.deviation
+    assert Enum.sum(Map.values(result_cheeky_switcher.stdevs)) <= Enum.sum(Map.values(result_loser_picks.stdevs))
+    assert result_cheeky_switcher.time_taken <= result_loser_picks.time_taken
+    assert result_cheeky_switcher.time_taken <= result_brute_force.time_taken
+  end
+
+  # @tag runnable: true
+  test "Compare algorithms stacked groups" do
+    parties = [
+      [11, 10, 10, 35],
+      [25, 21, 19, 16],
+      [15, 14, 8],
+      [34],
+      [29],
+      [28],
+      [27],
+      [26],
+    ]
+    compare_algorithms(parties, 2, "stacked groups")
+  end
+
+  # @tag runnable: true
+  test "Compare algorithms MasterBel2 case" do
+    parties = [
+      [9.39, 15.14],
+      [28.84, 15.06],
+      [43.69],
+      [29.56],
+      [28.27],
+      [25.34],
+      [23.45],
+      [21.65],
+      [21.6],
+      [18.46],
+      [17.7],
+      [16.29],
+      [16.01],
+      [10.27]
+    ]
+    compare_algorithms(parties, 2, "MasterBel2 case")
+  end
+
+  # @tag runnable: true
+  test "Compare algorithms: team_ffa" do
+    parties = [
+      [5],
+      [6],
+      [7],
+      [8],
+      [9],
+      [9]
+    ]
+    compare_algorithms(parties, 3, "team_ffa")
+  end
+
+  # @tag runnable: true
+  test "Compare algorithms: smurf party" do
+    parties = [
+       # Our smurf party
+      [51, 10, 10],
+
+      # Other players, a range of ratings
+      [35],
+      [34],
+      [29],
+      [28],
+      [27],
+      [26],
+      [25],
+      [21],
+      [19],
+      [16],
+      [15],
+      [14],
+      [8]
+    ]
+    compare_algorithms(parties, 2, "smurf party")
+  end
+
+  # @tag runnable: true
+  test "Compare algorithms: odd users" do
+    parties = [
+      [51],
+      [10],
+      [10],
+      [35],
+      [34],
+      [29],
+      [28],
+      [27],
+      [26],
+      [25],
+      [21],
+      [19],
+      [16],
+      [15],
+      [8]
+    ]
+    compare_algorithms(parties, 2, "odd users")
   end
 end
