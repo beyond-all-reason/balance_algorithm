@@ -26,6 +26,7 @@ defmodule Teiserver.Battle.BalanceUtil do
   @type player_group() :: %{T.userid() => rating_value()}
   @type expanded_group() :: %{
           members: [T.userid()],
+          names: [charlist()],
           ratings: [rating_value()],
           group_rating: rating_value(),
           count: non_neg_integer()
@@ -117,14 +118,19 @@ defmodule Teiserver.Battle.BalanceUtil do
     Enum.flat_map(teams, fn {_k, team_groups} -> team_groups end)
   end
 
-  @spec count_parties([expanded_group()]) :: non_neg_integer()
-  def count_parties(groups) do
+  @spec get_parties([expanded_group()]) :: [expanded_group()]
+  def get_parties(groups) do
     groups
     |> Enum.filter(fn group -> group.count > 1 end)
-    |> length()
   end
 
   @spec count_parties([expanded_group()]) :: non_neg_integer()
+  def count_parties(groups) do
+    get_parties(groups)
+    |> length()
+  end
+
+  @spec count_parties_in_teams(team_map()) :: number()
   def count_parties_in_teams(teams) do
     teams
     |> Map.values()
@@ -227,14 +233,6 @@ defmodule Teiserver.Battle.BalanceUtil do
     |> Enum.reject(fn {_, index} -> index in combo_b_indices end)
     |> Enum.map(fn {element, _} -> element end)
 
-    # IO.inspect(%{
-    #   group_b_combo: group_b_combo,
-    #   group_a_combo: group_a_combo,
-    #   team_a_groups_without_combo: team_a_groups_without_combo,
-    #   combo_b_groups: combo_b_groups,
-    #   team_b_groups_without_combo: team_b_groups_without_combo,
-    #   combo_a_groups: combo_a_groups
-    # }, label: "switch_group_combos_between_teams")
     teams
     |> Map.put(team_a_id, team_a_groups_without_combo ++ combo_b_groups)
     |> Map.put(team_b_id, team_b_groups_without_combo ++ combo_a_groups)

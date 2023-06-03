@@ -15,13 +15,12 @@ defmodule Teiserver.Battle.BruteForceAlgorithm do
   def brute_force_dont_use_in_production_for_the_love_of_bar([], _team_count, _opts, _log) do
     {[], []}
   end
-  def brute_force_dont_use_in_production_for_the_love_of_bar(expanded_groups, team_count, opts, log) do
+  def brute_force_dont_use_in_production_for_the_love_of_bar(expanded_groups, team_count, _opts, log) do
     # We're going to brute force all possible combinations of teams
     # and then pick the best one
     # This is a very dumb approach and will be slow for large groups
     # but it's a good point of comparison for the other algorithms
 
-    # IO.inspect(team_count, label: "brute_force_dont_use_in_production_for_the_love_of_bar, team count:")
     team_member_size = ceil(sum_group_membership_size(expanded_groups) / team_count)
 
     team_alternatives = expanded_groups
@@ -31,11 +30,8 @@ defmodule Teiserver.Battle.BruteForceAlgorithm do
     end)
     |> Enum.with_index()
     |> make_list_of_team_combinations(team_count)
-    # |> IO.inspect()
     |> Enum.sort_by(fn team -> team[:score] end, :asc)
     |> Enum.take(3)
-
-    # IO.inspect(teams)
 
     {hd(team_alternatives).team_groups, log}
   end
@@ -63,7 +59,6 @@ defmodule Teiserver.Battle.BruteForceAlgorithm do
           1 => first_candidate,
           2 => second_team,
         }
-        # IO.inspect(teams, label: "teams")
         deviation = max_team_rating_difference(team_groups)
         stdevs = team_stddevs(team_groups)
         score = deviation * 10 + Enum.max(stdevs)
@@ -78,7 +73,6 @@ defmodule Teiserver.Battle.BruteForceAlgorithm do
       end
     end)
     |> Enum.filter(fn x -> x != nil end)
-    # IO.inspect(valid_candidates, label: "valid_candidates")
     make_list_of_team_combinations(rest_candidates, team_count, teams ++ valid_candidates)
   end
 

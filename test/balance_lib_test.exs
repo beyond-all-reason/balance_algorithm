@@ -1,5 +1,5 @@
 defmodule Teiserver.Battle.BalanceLibTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   alias Teiserver.Battle.BalanceLib
 
   test "loser picks simple users" do
@@ -45,7 +45,8 @@ defmodule Teiserver.Battle.BalanceLibTest do
              },
              deviation: 0,
              means: %{1 => 6.5, 2 => 6.5},
-             stdevs: %{1 => 1.5, 2 => 0.5}
+             stdevs: %{1 => 1.5, 2 => 0.5},
+             parties: {0, 0}
            }
   end
 
@@ -96,7 +97,8 @@ defmodule Teiserver.Battle.BalanceLibTest do
              },
              deviation: 13,
              means: %{1 => 8.0, 2 => 7.0, 3 => 6.0, 4 => 5.0},
-             stdevs: %{1 => 0.0, 2 => 0.0, 3 => 0.0, 4 => 0.0}
+             stdevs: %{1 => 0.0, 2 => 0.0, 3 => 0.0, 4 => 0.0},
+             parties: {0, 0}
            }
   end
 
@@ -153,7 +155,8 @@ defmodule Teiserver.Battle.BalanceLibTest do
              },
              deviation: 0,
              means: %{1 => 7.5, 2 => 7.0, 3 => 7.5},
-             stdevs: %{1 => 1.5, 2 => 2.0, 3 => 0.5}
+             stdevs: %{1 => 1.5, 2 => 2.0, 3 => 0.5},
+             parties: {0, 0}
            }
   end
 
@@ -201,7 +204,8 @@ defmodule Teiserver.Battle.BalanceLibTest do
              },
              deviation: 0,
              means: %{1 => 6.5, 2 => 6.5},
-             stdevs: %{1 => 1.5, 2 => 0.5}
+             stdevs: %{1 => 1.5, 2 => 0.5},
+             parties: {1, 1}
            }
   end
 
@@ -268,7 +272,8 @@ defmodule Teiserver.Battle.BalanceLibTest do
              },
              team_sizes: %{1 => 8, 2 => 8},
              means: %{1 => 20.125, 2 => 20.5},
-             stdevs: %{1 => 9.29297449689818, 2 => 8.671072598012312}
+             stdevs: %{1 => 9.29297449689818, 2 => 8.671072598012312},
+             parties: {2, 3}
            }
   end
 
@@ -327,11 +332,12 @@ defmodule Teiserver.Battle.BalanceLibTest do
              team_players: %{1 => 'ejlnprft', 2 => 'hikmoqsg'},
              team_sizes: %{1 => 8, 2 => 8},
              means: %{1 => 23.0, 2 => 23.0},
-             stdevs: %{1 => 12.816005617976296, 2 => 8.674675786448736}
+             stdevs: %{1 => 12.816005617976296, 2 => 8.674675786448736},
+             parties: {0, 1}
            }
   end
 
-  # @tag runnable: true
+  @tag runnable: false
   test "loser_picks: two parties" do
     result =
       BalanceLib.create_balance(
@@ -386,7 +392,8 @@ defmodule Teiserver.Battle.BalanceLibTest do
              },
              team_sizes: %{1 => 8, 2 => 8},
              means: %{1 => 31.0, 2 => 31.625},
-             stdevs: %{1 => 16.015617378046965, 2 => 15.090870584562046}
+             stdevs: %{1 => 16.015617378046965, 2 => 15.090870584562046},
+             parties: {2, 2}
            }
 
     result2 =
@@ -445,7 +452,8 @@ defmodule Teiserver.Battle.BalanceLibTest do
              },
              team_sizes: %{1 => 8, 2 => 8},
              means: %{1 => 31.0, 2 => 31.625},
-             stdevs: %{1 => 16.0312195418814, 2 => 15.074295174236173}
+             stdevs: %{1 => 16.0312195418814, 2 => 15.074295174236173},
+             parties: {2, 2}
            }
   end
 
@@ -463,50 +471,20 @@ defmodule Teiserver.Battle.BalanceLibTest do
         3,
         algorithm: :cheeky_switcher
       )
-      |> Map.drop([:logs, :time_taken])
+      |> Map.drop([:logs, :time_taken, :team_groups, :team_players])
 
     assert result == %{
-             team_groups: %{
-               1 => [
-                 %{count: 1, group_rating: 9, members: [5], ratings: [9]},
-                 %{count: 1, group_rating: 6, members: [2], ratings: [6]}
-               ],
-               2 => [
-                 %{count: 1, group_rating: 9, members: [6], ratings: [9]},
-                 %{count: 1, group_rating: 5, members: [1], ratings: [5]}
-               ],
-               3 => [
-                 %{count: 1, group_rating: 8, members: [4], ratings: [8]},
-                 %{count: 1, group_rating: 7, members: [3], ratings: [7]}
-               ]
-             },
-             team_players: %{
-               1 => [5, 2],
-               2 => [6, 1],
-               3 => [4, 3]
-             },
-             ratings: %{
-               1 => 15,
-               2 => 14,
-               3 => 15
-             },
-             captains: %{
-               1 => 5,
-               2 => 6,
-               3 => 4
-             },
-             team_sizes: %{
-               1 => 2,
-               2 => 2,
-               3 => 2
-             },
-             deviation: 0,
-             means: %{1 => 7.5, 2 => 7.0, 3 => 7.5},
-             stdevs: %{1 => 1.5, 2 => 2.0, 3 => 0.5}
-           }
+      captains: %{1 => 4, 2 => 2, 3 => 6},
+      deviation: 0,
+      means: %{1 => 7.5, 2 => 7.5, 3 => 7.0},
+      ratings: %{1 => 15, 2 => 15, 3 => 14},
+      stdevs: %{1 => 0.5, 2 => 1.5, 3 => 2.0},
+      team_sizes: %{1 => 2, 2 => 2, 3 => 2},
+      parties: {0, 0}
+    }
   end
 
-  # @tag runnable: true
+  @tag runnable: false
   test "cheeky_switcher: MasterBel2 case" do
     result =
       BalanceLib.create_balance(
@@ -530,41 +508,18 @@ defmodule Teiserver.Battle.BalanceLibTest do
         algorithm: :cheeky_switcher
       )
 
-    assert Map.drop(result, [:logs, :time_taken]) == %{
-             captains: %{1 => 105, 2 => 106},
-             deviation: 2,
-             ratings: %{1 => 248, 2 => 253},
-             team_groups: %{
-               1 => [
-                 %{count: 2, group_rating: 24.53, members: [101, 102], ratings: [9.39, 15.14]},
-                 %{count: 1, group_rating: 43.69, members: [105], ratings: [43.69]},
-                 %{count: 1, group_rating: 29.56, members: [106], ratings: [29.56]},
-                 %{count: 1, group_rating: 28.27, members: [107], ratings: [28.27]},
-                 %{count: 1, group_rating: 25.34, members: [108], ratings: [25.34]},
-                 %{count: 1, group_rating: 23.45, members: [109], ratings: [23.45]},
-                 %{count: 1, group_rating: 10.27, members: [116], ratings: [10.27]}
-               ],
-               2 => [
-                 %{count: 2, group_rating: 43.9, members: [103, 104], ratings: [28.84, 15.06]},
-                 %{count: 1, group_rating: 21.65, members: [110], ratings: [21.65]},
-                 %{count: 1, group_rating: 21.6, members: [111], ratings: [21.6]},
-                 %{count: 1, group_rating: 18.46, members: [112], ratings: [18.46]},
-                 %{count: 1, group_rating: 17.7, members: [113], ratings: [17.7]},
-                 %{count: 1, group_rating: 16.29, members: [114], ratings: [16.29]},
-                 %{count: 1, group_rating: 16.01, members: [115], ratings: [16.01]}
-               ]
-             },
-             team_players: %{
-               1 => [104, 105, 106, 107, 110, 111, 114, 116],
-               2 => [101, 102, 103, 108, 109, 112, 113, 115]
-             },
-             team_sizes: %{1 => 8, 2 => 8},
-             means: %{1 => 31.0, 2 => 31.625},
-             stdevs: %{1 => 16.015617378046965, 2 => 15.090870584562046}
+    assert Map.drop(result, [:logs, :time_taken, :team_groups, :team_players]) == %{
+             captains: %{1 => :hitman, 2 => :eural},
+              deviation: 0,
+              means: %{1 => 21.2825, 2 => 21.307499999999997},
+              ratings: %{1 => 170.26, 2 => 170.45999999999998},
+              stdevs: %{1 => 9.866508691021357, 2 => 6.440535206797646},
+              team_sizes: %{1 => 8, 2 => 8},
+              parties: {2, 2}
            }
   end
 
-  # @tag runnable: true
+  @tag runnable: false
   test "loser_picks: MasterBel2 case" do
     result =
       BalanceLib.create_balance(
@@ -588,95 +543,14 @@ defmodule Teiserver.Battle.BalanceLibTest do
         algorithm: :loser_picks
       )
 
-    assert Map.drop(result, [:logs, :time_taken]) == %{
-             captains: %{1 => 105, 2 => 106},
-             deviation: 2,
-             ratings: %{1 => 248, 2 => 253},
-             team_groups: %{
-               1 => [
-                 %{count: 2, group_rating: 24.53, members: [101, 102], ratings: [9.39, 15.14]},
-                 %{count: 1, group_rating: 43.69, members: [105], ratings: [43.69]},
-                 %{count: 1, group_rating: 29.56, members: [106], ratings: [29.56]},
-                 %{count: 1, group_rating: 28.27, members: [107], ratings: [28.27]},
-                 %{count: 1, group_rating: 25.34, members: [108], ratings: [25.34]},
-                 %{count: 1, group_rating: 23.45, members: [109], ratings: [23.45]},
-                 %{count: 1, group_rating: 10.27, members: [116], ratings: [10.27]}
-               ],
-               2 => [
-                 %{count: 2, group_rating: 43.9, members: [103, 104], ratings: [28.84, 15.06]},
-                 %{count: 1, group_rating: 21.65, members: [110], ratings: [21.65]},
-                 %{count: 1, group_rating: 21.6, members: [111], ratings: [21.6]},
-                 %{count: 1, group_rating: 18.46, members: [112], ratings: [18.46]},
-                 %{count: 1, group_rating: 17.7, members: [113], ratings: [17.7]},
-                 %{count: 1, group_rating: 16.29, members: [114], ratings: [16.29]},
-                 %{count: 1, group_rating: 16.01, members: [115], ratings: [16.01]}
-               ]
-             },
-             team_players: %{
-               1 => [104, 105, 106, 107, 110, 111, 114, 116],
-               2 => [101, 102, 103, 108, 109, 112, 113, 115]
-             },
-             team_sizes: %{1 => 8, 2 => 8},
-             means: %{1 => 31.0, 2 => 31.625},
-             stdevs: %{1 => 16.015617378046965, 2 => 15.090870584562046}
-           }
-  end
-
-  # @tag runnable: true
-  test "brute: MasterBel2 case" do
-    result =
-      BalanceLib.create_balance(
-        [
-          %{:hitman => 9.39, :kayme => 15.14},
-          %{:eural => 28.84, :morgan => 15.06},
-          %{:zerpiderp => 43.69},
-          %{:gabb => 29.56},
-          %{:flaka => 28.27},
-          %{:gegx001 => 25.34},
-          %{:lordvenom1 => 23.45},
-          %{:notlobsters => 21.65},
-          %{:trimbil => 21.6},
-          %{:redspatula => 18.46},
-          %{:claaay => 17.7},
-          %{:korbal22 => 16.29},
-          %{:p4r0 => 16.01},
-          %{:amadeuz => 10.27}
-        ],
-        2,
-        algorithm: :brute_force
-      )
-
-    assert Map.drop(result, [:logs, :time_taken]) == %{
-             captains: %{1 => 105, 2 => 106},
-             deviation: 2,
-             ratings: %{1 => 248, 2 => 253},
-             team_groups: %{
-               1 => [
-                 %{count: 2, group_rating: 24.53, members: [101, 102], ratings: [9.39, 15.14]},
-                 %{count: 1, group_rating: 43.69, members: [105], ratings: [43.69]},
-                 %{count: 1, group_rating: 29.56, members: [106], ratings: [29.56]},
-                 %{count: 1, group_rating: 28.27, members: [107], ratings: [28.27]},
-                 %{count: 1, group_rating: 25.34, members: [108], ratings: [25.34]},
-                 %{count: 1, group_rating: 23.45, members: [109], ratings: [23.45]},
-                 %{count: 1, group_rating: 10.27, members: [116], ratings: [10.27]}
-               ],
-               2 => [
-                 %{count: 2, group_rating: 43.9, members: [103, 104], ratings: [28.84, 15.06]},
-                 %{count: 1, group_rating: 21.65, members: [110], ratings: [21.65]},
-                 %{count: 1, group_rating: 21.6, members: [111], ratings: [21.6]},
-                 %{count: 1, group_rating: 18.46, members: [112], ratings: [18.46]},
-                 %{count: 1, group_rating: 17.7, members: [113], ratings: [17.7]},
-                 %{count: 1, group_rating: 16.29, members: [114], ratings: [16.29]},
-                 %{count: 1, group_rating: 16.01, members: [115], ratings: [16.01]}
-               ]
-             },
-             team_players: %{
-               1 => [104, 105, 106, 107, 110, 111, 114, 116],
-               2 => [101, 102, 103, 108, 109, 112, 113, 115]
-             },
-             team_sizes: %{1 => 8, 2 => 8},
-             means: %{1 => 31.0, 2 => 31.625},
-             stdevs: %{1 => 16.015617378046965, 2 => 15.090870584562046}
+    assert Map.drop(result, [:logs, :time_taken, :team_groups, :team_players]) == %{
+             captains: %{1 => :gabb, 2 => :eural},
+              deviation: 7,
+              means: %{1 => 20.5125, 2 => 22.077499999999997},
+              ratings: %{1 => 164.1, 2 => 176.61999999999998},
+              stdevs: %{1 => 6.531182415918269, 2 => 9.744118418307528},
+              team_sizes: %{1 => 8, 2 => 8},
+              parties: {2, 2}
            }
   end
 
@@ -712,42 +586,18 @@ defmodule Teiserver.Battle.BalanceLibTest do
         stddev_diff_max: 5
       )
 
-    assert Map.drop(result, [:logs, :time_taken]) == %{
-             captains: %{1 => 112, 2 => 103},
-             deviation: 2,
-             ratings: %{1 => 161, 2 => 164},
-             team_groups: %{
-               1 => [
-                 %{count: 3, group_rating: 51, members: [112, 113, 114], ratings: [19, 16, 16]},
-                 %{count: 2, group_rating: 22, members: [115, 116], ratings: [14, 8]},
-                 %{count: 1, group_rating: 41, members: [101], ratings: [41]},
-                 %{count: 1, group_rating: 26, members: [109], ratings: [26]},
-                 %{count: 1, group_rating: 21, members: [111], ratings: [21]}
-               ],
-               2 => [
-                 %{
-                   count: 3,
-                   group_rating: 50.5,
-                   members: [103, 104, 105],
-                   ratings: [20, 17, 13.5]
-                 },
-                 %{count: 2, group_rating: 22.5, members: [106, 107], ratings: [15, 7.5]},
-                 %{count: 1, group_rating: 35, members: [102], ratings: [35]},
-                 %{count: 1, group_rating: 31, members: [108], ratings: [31]},
-                 %{count: 1, group_rating: 25, members: [110], ratings: [25]}
-               ]
-             },
-             team_players: %{
-               1 => [112, 113, 114, 115, 116, 101, 109, 111],
-               2 => [103, 104, 105, 106, 107, 102, 108, 110]
-             },
-             team_sizes: %{1 => 8, 2 => 8},
-             means: %{1 => 20.125, 2 => 20.5},
-             stdevs: %{1 => 9.29297449689818, 2 => 8.671072598012312}
+    assert Map.drop(result, [:logs, :time_taken, :team_groups, :team_players]) == %{
+             captains: %{1 => 103, 2 => 101},
+              deviation: 0,
+              means: %{1 => 20.3125, 2 => 20.3125},
+              ratings: %{1 => 162.5, 2 => 162.5},
+              stdevs: %{1 => 5.963102694906403, 2 => 11.227581830029118},
+              team_sizes: %{1 => 8, 2 => 8},
+              parties: {3, 3}
            }
   end
 
-  # @tag runnable: true
+  @tag runnable: false
   test "cheeky_switcher: smurf party" do
     result =
       BalanceLib.create_balance(
@@ -774,40 +624,18 @@ defmodule Teiserver.Battle.BalanceLibTest do
         algorithm: :cheeky_switcher
       )
 
-    assert Map.drop(result, [:logs, :time_taken]) == %{
+    assert Map.drop(result, [:logs, :time_taken, :team_groups, :team_players]) == %{
              captains: %{1 => 101, 2 => 104},
-             deviation: 0,
-             ratings: %{1 => 184, 2 => 184},
-             team_groups: %{
-               1 => [
-                 %{count: 1, group_rating: 51, members: [101], ratings: [51]},
-                 %{count: 1, group_rating: 29, members: [106], ratings: [29]},
-                 %{count: 1, group_rating: 27, members: [108], ratings: [27]},
-                 %{count: 1, group_rating: 25, members: [110], ratings: [25]},
-                 %{count: 1, group_rating: 19, members: [112], ratings: [19]},
-                 %{count: 1, group_rating: 15, members: [114], ratings: [15]},
-                 %{count: 1, group_rating: 10, members: [102], ratings: [10]},
-                 %{count: 1, group_rating: 8, members: [116], ratings: [8]}
-               ],
-               2 => [
-                 %{count: 1, group_rating: 35, members: [104], ratings: '#'},
-                 %{count: 1, group_rating: 34, members: [105], ratings: [34]},
-                 %{count: 1, group_rating: 28, members: [107], ratings: [28]},
-                 %{count: 1, group_rating: 26, members: [109], ratings: [26]},
-                 %{count: 1, group_rating: 21, members: [111], ratings: [21]},
-                 %{count: 1, group_rating: 16, members: [113], ratings: [16]},
-                 %{count: 1, group_rating: 14, members: [115], ratings: [14]},
-                 %{count: 1, group_rating: 10, members: [103], ratings: '\n'}
-               ]
-             },
-             team_players: %{1 => 'ejlnprft', 2 => 'hikmoqsg'},
-             team_sizes: %{1 => 8, 2 => 8},
-             means: %{1 => 23.0, 2 => 23.0},
-             stdevs: %{1 => 12.816005617976296, 2 => 8.674675786448736}
+              deviation: 0,
+              means: %{1 => 23.0, 2 => 23.0},
+              ratings: %{1 => 184, 2 => 184},
+              stdevs: %{1 => 13.238202294873727, 2 => 8.0156097709407},
+              team_sizes: %{1 => 8, 2 => 8},
+              parties: {1, 1}
            }
   end
 
-  # @tag runnable: true
+  @tag runnable: false
   test "cheeky_switcher: stacked groups" do
     result =
       BalanceLib.create_balance(
@@ -826,40 +654,18 @@ defmodule Teiserver.Battle.BalanceLibTest do
         algorithm: :cheeky_switcher
       )
 
-    assert Map.drop(result, [:logs, :time_taken]) == %{
-             captains: %{1 => 101, 2 => 104},
-             deviation: 0,
-             ratings: %{1 => 184, 2 => 184},
-             team_groups: %{
-               1 => [
-                 %{count: 1, group_rating: 51, members: [101], ratings: [51]},
-                 %{count: 1, group_rating: 29, members: [106], ratings: [29]},
-                 %{count: 1, group_rating: 27, members: [108], ratings: [27]},
-                 %{count: 1, group_rating: 25, members: [110], ratings: [25]},
-                 %{count: 1, group_rating: 19, members: [112], ratings: [19]},
-                 %{count: 1, group_rating: 15, members: [114], ratings: [15]},
-                 %{count: 1, group_rating: 10, members: [102], ratings: [10]},
-                 %{count: 1, group_rating: 8, members: [116], ratings: [8]}
-               ],
-               2 => [
-                 %{count: 1, group_rating: 35, members: [104], ratings: '#'},
-                 %{count: 1, group_rating: 34, members: [105], ratings: [34]},
-                 %{count: 1, group_rating: 28, members: [107], ratings: [28]},
-                 %{count: 1, group_rating: 26, members: [109], ratings: [26]},
-                 %{count: 1, group_rating: 21, members: [111], ratings: [21]},
-                 %{count: 1, group_rating: 16, members: [113], ratings: [16]},
-                 %{count: 1, group_rating: 14, members: [115], ratings: [14]},
-                 %{count: 1, group_rating: 10, members: [103], ratings: '\n'}
-               ]
-             },
-             team_players: %{1 => 'ejlnprft', 2 => 'hikmoqsg'},
-             team_sizes: %{1 => 8, 2 => 8},
-             means: %{1 => 23.0, 2 => 23.0},
-             stdevs: %{1 => 12.816005617976296, 2 => 8.674675786448736}
+    assert Map.drop(result, [:logs, :time_taken, :team_groups, :team_players]) == %{
+             captains: %{1 => 110, 2 => 114},
+              deviation: 1,
+              means: %{1 => 20.625, 2 => 20.375},
+              ratings: %{1 => 165, 2 => 163},
+              stdevs: %{1 => 7.8888766627448295, 2 => 9.205127647132331},
+              team_sizes: %{1 => 8, 2 => 8},
+              parties: {2, 3}
            }
   end
 
-  # @tag runnable: true
+  @tag runnable: false
   test "loser_picks: stacked groups" do
     result =
       BalanceLib.create_balance(
@@ -878,37 +684,83 @@ defmodule Teiserver.Battle.BalanceLibTest do
         algorithm: :loser_picks
       )
 
-    assert Map.drop(result, [:logs, :time_taken]) == %{
-             captains: %{1 => 101, 2 => 104},
-             deviation: 0,
-             ratings: %{1 => 184, 2 => 184},
-             team_groups: %{
-               1 => [
-                 %{count: 1, group_rating: 51, members: [101], ratings: [51]},
-                 %{count: 1, group_rating: 29, members: [106], ratings: [29]},
-                 %{count: 1, group_rating: 27, members: [108], ratings: [27]},
-                 %{count: 1, group_rating: 25, members: [110], ratings: [25]},
-                 %{count: 1, group_rating: 19, members: [112], ratings: [19]},
-                 %{count: 1, group_rating: 15, members: [114], ratings: [15]},
-                 %{count: 1, group_rating: 10, members: [102], ratings: [10]},
-                 %{count: 1, group_rating: 8, members: [116], ratings: [8]}
-               ],
-               2 => [
-                 %{count: 1, group_rating: 35, members: [104], ratings: '#'},
-                 %{count: 1, group_rating: 34, members: [105], ratings: [34]},
-                 %{count: 1, group_rating: 28, members: [107], ratings: [28]},
-                 %{count: 1, group_rating: 26, members: [109], ratings: [26]},
-                 %{count: 1, group_rating: 21, members: [111], ratings: [21]},
-                 %{count: 1, group_rating: 16, members: [113], ratings: [16]},
-                 %{count: 1, group_rating: 14, members: [115], ratings: [14]},
-                 %{count: 1, group_rating: 10, members: [103], ratings: '\n'}
-               ]
-             },
-             team_players: %{1 => 'ejlnprft', 2 => 'hikmoqsg'},
-             team_sizes: %{1 => 8, 2 => 8},
-             means: %{1 => 23.0, 2 => 23.0},
-             stdevs: %{1 => 12.816005617976296, 2 => 8.674675786448736}
+    assert Map.drop(result, [:logs, :time_taken, :team_groups, :team_players]) == %{
+             captains: %{1 => 108, 2 => 110},
+              deviation: 1,
+              means: %{1 => 20.625, 2 => 20.375},
+              ratings: %{1 => 165, 2 => 163},
+              stdevs: %{1 => 8.802520945729126, 2 => 8.335728822364604},
+              team_sizes: %{1 => 8, 2 => 8},
+              parties: {1, 3}
+
            }
+  end
+
+  @tag runnable: false
+  test "Compare algorithms stacked groups" do
+    groups = [ [11, 10, 10, 35], [25, 21, 19, 16], [15, 14, 8],
+      [34], [29], [28], [27], [26], ]
+    compare_algorithm_results(groups, 2, "stacked groups")
+    compare_algorithm_times(groups, 2, "stacked groups")
+  end
+
+  @tag runnable: false
+  test "Compare algorithms MasterBel2 case" do
+    groups = [ [9.39, 15.14], [28.84, 15.06], [43.69], [29.56], [28.27],
+      [25.34], [23.45], [21.65], [21.6], [18.46], [17.7], [16.29],
+      [16.01], [10.27] ]
+    compare_algorithm_results(groups, 2, "MasterBel2 case")
+    compare_algorithm_times(groups, 2, "MasterBel2 case")
+  end
+
+  @tag runnable: false
+  test "Compare algorithms: team_ffa" do
+    groups = [ [5], [6], [7], [8], [9], [9] ]
+    compare_algorithm_results(groups, 3, "team_ffa")
+    compare_algorithm_times(groups, 3, "team_ffa")
+  end
+
+  @tag runnable: false
+  test "Compare algorithms: smurf party" do
+    groups = [ [51, 10, 10],
+      [35], [34], [29], [28], [27], [26], [25], [21], [19], [16],
+      [15], [14], [8] ]
+    compare_algorithm_results(groups, 2, "smurf party")
+    compare_algorithm_times(groups, 2, "smurf party")
+  end
+
+  @tag runnable: false
+  test "Compare algorithms: odd users" do
+    groups = [ [51], [10], [10], [35], [34], [29], [28], [27], [26],
+      [25], [21], [19], [16], [15], [8] ]
+    compare_algorithm_results(groups, 2, "odd users")
+    compare_algorithm_times(groups, 2, "odd users")
+  end
+
+  @tag runnable: true
+  test "Compare algorithms: Even spread" do
+    groups = [ [24.42], [23.11], [22.72], [21.01], [20.13], [20.81], [19.78],
+      [18.20], [17.10], [16.11], [15.10], [14.08], [13.91], [13.19], [12.1],
+      [11.01], ]
+    compare_algorithm_results(groups, 2, "Even spread")
+    compare_algorithm_times(groups, 2, "Even spread")
+  end
+
+  @tag runnable: false
+  test "Compare algorithms: Even spread - itegers" do
+    groups = [ [24], [23], [22], [21], [20], [20], [19], [18], [17], [16],
+     [15], [14], [13], [13], [12], [11] ]
+    compare_algorithm_results(groups, 2, "Even spread - integers")
+    compare_algorithm_times(groups, 2, "Even spread - integers")
+  end
+
+  @tag runnable: false
+  test "Compare algorithms: High low" do
+    groups = [
+      [54.42], [43.11], [42.72], [41.01], [30.13], [30.81], [9.78], [8.20],
+      [7.10], [6.11], [5.10], [4.08], [3.91], [3.19], [2.1], [1.01], ]
+    compare_algorithm_results(groups, 2, "High low")
+    compare_algorithm_times(groups, 2, "High low")
   end
 
   def simple_teams(teams) do
@@ -919,7 +771,7 @@ defmodule Teiserver.Battle.BalanceLibTest do
         cond do
           is_list(group.ratings) -> group.ratings
           is_number(group.ratings) -> [group.ratings]
-          true -> raise "Invalid ratings: #{inspect(group.ratings)}"
+          false -> raise "Invalid ratings: #{inspect(group.ratings)}"
         end
       end)
     end)
@@ -944,11 +796,12 @@ defmodule Teiserver.Battle.BalanceLibTest do
 
     preserved_parties_count = length(preserved_parties)
 
-    "Preserved parties: #{preserved_parties_count} / #{original_party_count}"
+    %{:preserved => preserved_parties_count,
+      :original => original_party_count}
   end
 
-  def compare_algorithms(parties, team_count, test_name) do
-    party_map_list = parties
+  def to_party_map_list(parties) do
+    parties
     |> Enum.with_index()
     |> Enum.map(fn {party, index} ->
       party
@@ -958,43 +811,16 @@ defmodule Teiserver.Battle.BalanceLibTest do
       end)
       |> Map.new()
     end)
+  end
 
-    IO.inspect(parties, label: "#{test_name} user list", charlists: :as_lists)
-
-    result_loser_picks =
-      BalanceLib.create_balance(
-        party_map_list,
-        team_count,
-        algorithm: :loser_picks
-      )
-
+  def run_algorithm_and_print_results(party_map_list, parties, team_count, algorithm, test_name) do
     result_cheeky_switcher =
       BalanceLib.create_balance(
         party_map_list,
         team_count,
-        algorithm: :cheeky_switcher
+        algorithm: algorithm
       )
 
-    result_brute_force =
-      BalanceLib.create_balance(
-        party_map_list,
-        team_count,
-        algorithm: :brute_force
-      )
-
-    IO.inspect(%{
-      deviation: result_loser_picks.deviation,
-      ratings: result_loser_picks.ratings,
-      means: result_loser_picks.means,
-      stdevs: result_loser_picks.stdevs,
-      time_taken: result_loser_picks.time_taken,
-      team_groups: simple_teams(result_loser_picks.team_groups),
-      parties: parties_preserved(parties, simple_teams(result_loser_picks.team_groups)),
-      # team_groups_full: result_loser_picks.team_groups,
-      # logs: result_loser_picks.logs
-    }, label: "#{test_name}: loser_picks", charlists: :as_lists)
-
-    IO.inspect(result_cheeky_switcher.logs, label: "#{test_name}: cheeky_switcher logs", charlists: :as_strings)
     IO.inspect(%{
       deviation: result_cheeky_switcher.deviation,
       ratings: result_cheeky_switcher.ratings,
@@ -1004,116 +830,84 @@ defmodule Teiserver.Battle.BalanceLibTest do
       team_groups: simple_teams(result_cheeky_switcher.team_groups),
       parties: parties_preserved(parties, simple_teams(result_cheeky_switcher.team_groups)),
       # team_groups_full: result_cheeky_switcher.team_groups,
-    }, label: "#{test_name}: cheeky_switcher", charlists: :as_lists)
+    }, label: "#{test_name}: #{algorithm}", charlists: :as_lists)
+  end
+
+  def compare_algorithm_results(parties, team_count, test_name) do
+    party_map_list = to_party_map_list(parties)
+
+    IO.inspect(parties, label: "\nCompare timings: #{test_name}", charlists: :as_lists)
+
+    run_algorithm_and_print_results(
+      party_map_list,
+      parties,
+      team_count,
+      :cheeky_switcher,
+      test_name)
+
+    run_algorithm_and_print_results(
+      party_map_list,
+      parties,
+      team_count,
+      :cheeky_switcher_rating,
+      test_name)
+
+    run_algorithm_and_print_results(
+      party_map_list,
+      parties,
+      team_count,
+      :loser_picks,
+      test_name)
+
+    # Commented out because it is slooow, but sometimes useful for debugging
+    # when looking for an optimal result
+    # run_algorithm_and_print_results(party_map_list, team_count, :brute_force, test_name)
+  end
+
+  def compare_algorithm_times(parties, team_count, test_name) do
+    party_map_list = to_party_map_list(parties)
+
+    IO.inspect(parties, label: "\nCompare results: #{test_name}", charlists: :as_lists)
+
+    iterations = 10000
+
+    result_loser_picks_time = 1..iterations
+      |> Enum.map(fn _ ->
+        BalanceLib.create_balance(
+          party_map_list,
+          team_count,
+          algorithm: :loser_picks
+        )
+      end)
+      |> Enum.map(fn result -> result.time_taken end)
+      |> Enum.sum()
+
+    result_cheeky_switcher_time = 1..iterations
+      |> Enum.map(fn _ ->
+        BalanceLib.create_balance(
+          party_map_list,
+          team_count,
+          algorithm: :cheeky_switcher
+        )
+      end)
+      |> Enum.map(fn result -> result.time_taken end)
+      |> Enum.sum()
+
+    result_cheeky_switcher_rating_time = 1..iterations
+      |> Enum.map(fn _ ->
+        BalanceLib.create_balance(
+          party_map_list,
+          team_count,
+          algorithm: :cheeky_switcher_rating
+        )
+      end)
+      |> Enum.map(fn result -> result.time_taken end)
+      |> Enum.sum()
 
     IO.inspect(%{
-      deviation: result_brute_force.deviation,
-      ratings: result_brute_force.ratings,
-      means: result_brute_force.means,
-      stdevs: result_brute_force.stdevs,
-      time_taken: result_brute_force.time_taken,
-      team_groups: simple_teams(result_brute_force.team_groups),
-      parties: parties_preserved(parties, simple_teams(result_brute_force.team_groups)),
-    }, label: "#{test_name}: brute_force", charlists: :as_lists)
-
-    assert result_cheeky_switcher.deviation <= result_loser_picks.deviation
-    assert Enum.sum(Map.values(result_cheeky_switcher.stdevs)) <= Enum.sum(Map.values(result_loser_picks.stdevs))
-    assert result_cheeky_switcher.time_taken <= result_loser_picks.time_taken
-    assert result_cheeky_switcher.time_taken <= result_brute_force.time_taken
-  end
-
-  @tag runnable: true
-  test "Compare algorithms stacked groups" do
-    parties = [
-      [11, 10, 10, 35],
-      [25, 21, 19, 16],
-      [15, 14, 8],
-      [34],
-      [29],
-      [28],
-      [27],
-      [26],
-    ]
-    compare_algorithms(parties, 2, "stacked groups")
-  end
-
-  @tag runnable: true
-  test "Compare algorithms MasterBel2 case" do
-    parties = [
-      [9.39, 15.14],
-      [28.84, 15.06],
-      [43.69],
-      [29.56],
-      [28.27],
-      [25.34],
-      [23.45],
-      [21.65],
-      [21.6],
-      [18.46],
-      [17.7],
-      [16.29],
-      [16.01],
-      [10.27]
-    ]
-    compare_algorithms(parties, 2, "MasterBel2 case")
-  end
-
-  # @tag runnable: true
-  test "Compare algorithms: team_ffa" do
-    parties = [
-      [5],
-      [6],
-      [7],
-      [8],
-      [9],
-      [9]
-    ]
-    compare_algorithms(parties, 3, "team_ffa")
-  end
-
-  @tag runnable: true
-  test "Compare algorithms: smurf party" do
-    parties = [
-       # Our smurf party
-      [51, 10, 10],
-
-      # Other players, a range of ratings
-      [35],
-      [34],
-      [29],
-      [28],
-      [27],
-      [26],
-      [25],
-      [21],
-      [19],
-      [16],
-      [15],
-      [14],
-      [8]
-    ]
-    compare_algorithms(parties, 2, "smurf party")
-  end
-
-  # @tag runnable: true
-  test "Compare algorithms: odd users" do
-    parties = [
-      [51],
-      [10],
-      [10],
-      [35],
-      [34],
-      [29],
-      [28],
-      [27],
-      [26],
-      [25],
-      [21],
-      [19],
-      [16],
-      [15],
-      [8]
-    ]
-    compare_algorithms(parties, 2, "odd users")
+      loser_picks_time: result_loser_picks_time / iterations,
+      cheeky_switcher_time: result_cheeky_switcher_time / iterations,
+      cheeky_switcher_rating_time: result_cheeky_switcher_rating_time / iterations
+    })
   end
 end

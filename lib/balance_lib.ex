@@ -56,6 +56,8 @@ defmodule Teiserver.Battle.BalanceLib do
         }
       end)
 
+    original_parties = get_parties(expanded_groups)
+
     # raise "Call"
     {team_groups, logs} =
       case opts[:algorithm] || :loser_picks do
@@ -63,6 +65,8 @@ defmodule Teiserver.Battle.BalanceLib do
           LoserPicksAlgorithm.loser_picks(expanded_groups, team_count, opts)
         :cheeky_switcher ->
           CheekySwitcherAlgorithm.cheeky_switcher(expanded_groups, team_count, opts)
+        :cheeky_switcher_rating ->
+          CheekySwitcherAlgorithm.cheeky_switcher_rating(expanded_groups, team_count, opts)
         :brute_force ->
           BruteForceAlgorithm.brute_force_dont_use_in_production_for_the_love_of_bar(expanded_groups, team_count, opts)
       end
@@ -78,13 +82,28 @@ defmodule Teiserver.Battle.BalanceLib do
         {team, players}
       end)
 
+    parties_preserved =
+      original_parties
+      |> Enum.filter(fn party ->
+        team_groups
+        |> Map.values()
+        |> Enum.any?(fn team_groups ->
+          Enum.any?(team_groups, fn group ->
+            Enum.all?(party.members, fn m -> Enum.member?(group.members, m) end)
+          end)
+        end)
+      end)
+
+    parties = {Enum.count(parties_preserved), Enum.count(original_parties)}
+
     time_taken = System.system_time(:microsecond) - start_time
 
     %{
       team_groups: team_groups,
       team_players: team_players,
       logs: logs,
-      time_taken: time_taken
+      time_taken: time_taken,
+      parties: parties
     }
     |> calculate_balance_stats
   end
