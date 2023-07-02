@@ -457,68 +457,6 @@ defmodule Teiserver.Battle.BalanceLibTest do
            }
   end
 
-  test "cheeky_switcher: team ffa" do
-    result =
-      BalanceLib.create_balance(
-        [
-          %{1 => 5},
-          %{2 => 6},
-          %{3 => 7},
-          %{4 => 8},
-          %{5 => 9},
-          %{6 => 9}
-        ],
-        3,
-        algorithm: :cheeky_switcher
-      )
-      |> Map.drop([:logs, :time_taken, :team_groups, :team_players])
-
-    assert result == %{
-      captains: %{1 => 4, 2 => 2, 3 => 6},
-      deviation: 0,
-      means: %{1 => 7.5, 2 => 7.5, 3 => 7.0},
-      ratings: %{1 => 15, 2 => 15, 3 => 14},
-      stdevs: %{1 => 0.5, 2 => 1.5, 3 => 2.0},
-      team_sizes: %{1 => 2, 2 => 2, 3 => 2},
-      parties: {0, 0}
-    }
-  end
-
-  @tag runnable: false
-  test "cheeky_switcher: MasterBel2 case" do
-    result =
-      BalanceLib.create_balance(
-        [
-          %{:hitman => 9.39, :kayme => 15.14},
-          %{:eural => 28.84, :morgan => 15.06},
-          %{:zerpiderp => 43.69},
-          %{:gabb => 29.56},
-          %{:flaka => 28.27},
-          %{:gegx001 => 25.34},
-          %{:lordvenom1 => 23.45},
-          %{:notlobsters => 21.65},
-          %{:trimbil => 21.6},
-          %{:redspatula => 18.46},
-          %{:claaay => 17.7},
-          %{:korbal22 => 16.29},
-          %{:p4r0 => 16.01},
-          %{:amadeuz => 10.27}
-        ],
-        2,
-        algorithm: :cheeky_switcher
-      )
-
-    assert Map.drop(result, [:logs, :time_taken, :team_groups, :team_players]) == %{
-             captains: %{1 => :hitman, 2 => :eural},
-              deviation: 0,
-              means: %{1 => 21.2825, 2 => 21.307499999999997},
-              ratings: %{1 => 170.26, 2 => 170.45999999999998},
-              stdevs: %{1 => 9.866508691021357, 2 => 6.440535206797646},
-              team_sizes: %{1 => 8, 2 => 8},
-              parties: {2, 2}
-           }
-  end
-
   @tag runnable: false
   test "loser_picks: MasterBel2 case" do
     result =
@@ -554,117 +492,6 @@ defmodule Teiserver.Battle.BalanceLibTest do
            }
   end
 
-  test "cheeky_switcher: bigger game group" do
-    result =
-      BalanceLib.create_balance(
-        [
-          # Two high tier players partied together
-          %{101 => 41, 102 => 35},
-
-          # A bunch of mid-low tier players together
-          %{103 => 20, 104 => 17, 105 => 13.5},
-
-          # A smaller bunch of even lower tier players
-          %{106 => 15, 107 => 7.5},
-
-          # Other players, a range of ratings
-          %{108 => 31},
-          %{109 => 26},
-          %{110 => 25},
-          %{111 => 21},
-          %{112 => 19},
-          %{113 => 16},
-          %{114 => 16},
-          %{115 => 14},
-          %{116 => 8}
-        ],
-        2,
-        algorithm: :cheeky_switcher,
-        rating_lower_boundary: 5,
-        rating_upper_boundary: 5,
-        mean_diff_max: 5,
-        stddev_diff_max: 5
-      )
-
-    assert Map.drop(result, [:logs, :time_taken, :team_groups, :team_players]) == %{
-             captains: %{1 => 103, 2 => 101},
-              deviation: 0,
-              means: %{1 => 20.3125, 2 => 20.3125},
-              ratings: %{1 => 162.5, 2 => 162.5},
-              stdevs: %{1 => 5.963102694906403, 2 => 11.227581830029118},
-              team_sizes: %{1 => 8, 2 => 8},
-              parties: {3, 3}
-           }
-  end
-
-  @tag runnable: false
-  test "cheeky_switcher: smurf party" do
-    result =
-      BalanceLib.create_balance(
-        [
-          # Our smurf party
-          %{101 => 51, 102 => 10, 103 => 10},
-
-          # Other players, a range of ratings
-          %{104 => 35},
-          %{105 => 34},
-          %{106 => 29},
-          %{107 => 28},
-          %{108 => 27},
-          %{109 => 26},
-          %{110 => 25},
-          %{111 => 21},
-          %{112 => 19},
-          %{113 => 16},
-          %{114 => 15},
-          %{115 => 14},
-          %{116 => 8}
-        ],
-        2,
-        algorithm: :cheeky_switcher
-      )
-
-    assert Map.drop(result, [:logs, :time_taken, :team_groups, :team_players]) == %{
-             captains: %{1 => 101, 2 => 104},
-              deviation: 0,
-              means: %{1 => 23.0, 2 => 23.0},
-              ratings: %{1 => 184, 2 => 184},
-              stdevs: %{1 => 13.238202294873727, 2 => 8.0156097709407},
-              team_sizes: %{1 => 8, 2 => 8},
-              parties: {1, 1}
-           }
-  end
-
-  @tag runnable: false
-  test "cheeky_switcher: stacked groups" do
-    result =
-      BalanceLib.create_balance(
-        [
-          %{101 => 11, 102 => 10, 103 => 10, 104 => 35},
-          %{110 => 25, 111 => 21, 112 => 19, 113 => 16},
-          %{114 => 15, 115 => 14, 116 => 8},
-
-          %{105 => 34},
-          %{106 => 29},
-          %{107 => 28},
-          %{108 => 27},
-          %{109 => 26},
-        ],
-        2,
-        algorithm: :cheeky_switcher
-      )
-
-    assert Map.drop(result, [:logs, :time_taken, :team_groups, :team_players]) == %{
-             captains: %{1 => 110, 2 => 114},
-              deviation: 1,
-              means: %{1 => 20.625, 2 => 20.375},
-              ratings: %{1 => 165, 2 => 163},
-              stdevs: %{1 => 7.8888766627448295, 2 => 9.205127647132331},
-              team_sizes: %{1 => 8, 2 => 8},
-              parties: {2, 3}
-           }
-  end
-
   @tag runnable: false
   test "loser_picks: stacked groups" do
     result =
@@ -696,72 +523,255 @@ defmodule Teiserver.Battle.BalanceLibTest do
            }
   end
 
-  @tag runnable: false
-  test "Compare algorithms stacked groups" do
-    groups = [ [11, 10, 10, 35], [25, 21, 19, 16], [15, 14, 8],
-      [34], [29], [28], [27], [26], ]
-    compare_algorithm_results(groups, 2, "stacked groups")
-    compare_algorithm_times(groups, 2, "stacked groups")
-  end
+  @stacked_groups %{
+    groups: [ [11, 10, 10, 35], [25, 21, 19, 16], [15, 14, 8],
+      [34], [29], [28], [27], [26], ],
+    name: "Stacked groups",
+    team_count: 2
+  }
 
-  @tag runnable: false
-  test "Compare algorithms MasterBel2 case" do
-    groups = [ [9.39, 15.14], [28.84, 15.06], [43.69], [29.56], [28.27],
+  @master_bel %{
+    groups: [ [9.39, 15.14], [28.84, 15.06], [43.69], [29.56], [28.27],
       [25.34], [23.45], [21.65], [21.6], [18.46], [17.7], [16.29],
-      [16.01], [10.27] ]
-    compare_algorithm_results(groups, 2, "MasterBel2 case")
-    compare_algorithm_times(groups, 2, "MasterBel2 case")
-  end
+      [16.01], [10.27] ],
+    name: "MasterBel2 case",
+    team_count: 2
+  }
 
-  @tag runnable: false
-  test "Compare algorithms: team_ffa" do
-    groups = [ [5], [6], [7], [8], [9], [9] ]
-    compare_algorithm_results(groups, 3, "team_ffa")
-    compare_algorithm_times(groups, 3, "team_ffa")
-  end
+  @team_ffa %{
+    groups: [ [9.39, 15.14], [28.84, 15.06], [43.69], [29.56], [28.27],
+      [25.34], [23.45], [21.65], [21.6], [18.46], [17.7], [16.29],
+      [16.01], [10.27] ],
+    name: "Team FFA",
+    team_count: 3
+  }
 
-  @tag runnable: false
-  test "Compare algorithms: smurf party" do
-    groups = [ [51, 10, 10],
+  @smurf_party %{
+    groups: [ [51, 10, 10],
       [35], [34], [29], [28], [27], [26], [25], [21], [19], [16],
-      [15], [14], [8] ]
-    compare_algorithm_results(groups, 2, "smurf party")
-    compare_algorithm_times(groups, 2, "smurf party")
-  end
+      [15], [14], [8] ],
+    name: "Smurf party",
+    team_count: 2
+  }
 
-  @tag runnable: false
-  test "Compare algorithms: odd users" do
-    groups = [ [51], [10], [10], [35], [34], [29], [28], [27], [26],
-      [25], [21], [19], [16], [15], [8] ]
-    compare_algorithm_results(groups, 2, "odd users")
-    compare_algorithm_times(groups, 2, "odd users")
-  end
+  @odd_users %{
+    groups: [ [51, 10, 10],
+      [35], [34], [29], [28], [27], [26], [25], [21], [19], [16],
+      [15], [14], [8] ],
+    name: "Odd users",
+    team_count: 2
+  }
+
+  @even_spread %{
+    groups: [ [24.42], [23.11], [22.72], [21.01], [20.13], [20.81], [19.78],
+      [18.20], [17.10], [16.11], [15.10], [14.08], [13.91], [13.19], [12.1],
+      [11.01], ],
+    name: "Even spread",
+    team_count: 2
+  }
+
+  @even_spread_integers %{
+    groups: [ [24, 23, 22, 21, 20, 20, 19, 18, 17, 16, 15, 14, 13, 13, 12, 11] ],
+    name: "Even spread integers",
+    team_count: 2
+  }
+
+  @high_low %{
+    groups:  [
+      [54.42], [43.11], [42.72], [41.01], [30.13], [30.81], [9.78], [8.20],
+      [7.10], [6.11], [5.10], [4.08], [3.91], [3.19], [2.1], [1.01], ],
+    name: "High low",
+    team_count: 2
+  }
+
+  @big_lobboy %{
+    groups:  [
+      [54.42], [43.11], [42.72], [41.01], [30.13], [30.81], [9.78], [8.20],
+      [7.10], [6.11], [5.10], [4.08], [3.91], [3.19], [2.1], [1.01], [23.1], [13.1], [24.1], [23.1],
+      [13.2], [25.1], [13.2], [2.1, 43.1], [20.1], [19.1], [23.01, 4.1, 23.01, 13.1], [25.1],
+      [43.9], [22.1], [14.0], [2.2], [33.1], [13.9], [14.29, 23.7],
+      ],
+    name: "Big lobby (40)",
+    team_count: 2
+  }
+
+  @mega_lobby %{
+    groups:  [
+      [54.42], [43.11], [42.72], [41.01], [30.13], [30.81], [9.78], [8.20],
+      [7.10], [6.11], [5.10], [4.08], [3.91], [3.19], [2.1], [1.01], [23.1], [13.1], [24.1], [23.1],
+      [13.2], [25.1], [13.2], [2.1], [43.1], [20.1], [19.1], [23.01], [4.1], [23.01], [13.1], [25.1],
+      [43.9], [22.1], [14.0], [2.2], [33.1], [13.9], [14.29], [23.7], [2.1], [23.12], [23.19], [23.1],
+      [40.9], [21.1], [15.2], [2.8], [33.2], [3.1], [15.2], [23.7], [1.1], [23.21], [33.1], [22.1],
+      [41.9], [20], [18], [2.9], [33.9], [33.1], [15.1], [23.8], [2.1], [23.41], [43.1], [21.1],
+      [7], [8], [9], [10], [11], [12], [13], [14], [15], [16], [17], [18],
+      ],
+    name: "Mega lobby (80)",
+    team_count: 2
+  }
+
+  @mega_lobby_parties %{
+    groups:  [
+      [54.42, 43.11], [42.72], [41.01], [30.13, 30.81, 9.78], [8.20],
+      [7.10], [6.11], [5.10], [4.08, 3.91, 39.19], [2.1], [1.01], [23.1], [13.1], [24.1, 23.1],
+      [13.2, 25.1], [13.2], [2.1], [43.1], [20.1, 19.1, 23.01, 4.1], [23.01], [13.1], [25.1],
+      [43.9], [22.1, 14.0, 2.2, 33.1, 13.9], [14.29], [23.7, 2.1], [23.12], [23.19], [23.1],
+      [40.9], [21.1, 15.2, 2.8], [33.2], [3.1], [15.2, 23.7, 1.1, 23.21, 33.1], [22.1],
+      [41.9], [20], [18], [2.9], [33.9], [33.1], [15.1], [23.8, 2.1, 23.41, 43.1], [21.1],
+      [7, 8, 9, 10], [11, 12, 13, 14, 15, 16, 17, 18],
+    ],
+    name: "Mega lobby, many parties (80)",
+    team_count: 2
+  }
+
+  # @iterations 1000
+  @iterations 100
 
   @tag runnable: true
-  test "Compare algorithms: Even spread" do
-    groups = [ [24.42], [23.11], [22.72], [21.01], [20.13], [20.81], [19.78],
-      [18.20], [17.10], [16.11], [15.10], [14.08], [13.91], [13.19], [12.1],
-      [11.01], ]
-    compare_algorithm_results(groups, 2, "Even spread")
-    compare_algorithm_times(groups, 2, "Even spread")
+  @tag timeout: :infinity
+  test "Compare all algorithms against cases" do
+    cases = [@stacked_groups, @master_bel, @team_ffa, @smurf_party, @odd_users, @even_spread, @even_spread_integers, @high_low, @mega_lobby, @mega_lobby_parties]
+    algorithms = [:cheeky_switcher, :loser_picks, :cheeky_switcher_rating, :cheeky_switcher_smart]
+    # cases = [@stacked_groups]
+    # algorithms = [:cheeky_switcher_smart]
+
+    results = summarize_average_case_results_per_algorithm(algorithms, cases)
+
+    IO.inspect(results, label: "Results", charlists: :as_lists)
   end
 
-  @tag runnable: false
-  test "Compare algorithms: Even spread - itegers" do
-    groups = [ [24], [23], [22], [21], [20], [20], [19], [18], [17], [16],
-     [15], [14], [13], [13], [12], [11] ]
-    compare_algorithm_results(groups, 2, "Even spread - integers")
-    compare_algorithm_times(groups, 2, "Even spread - integers")
+  def summarize_average_case_results_per_algorithm(algorithms, cases) do
+    Enum.map(algorithms, fn algorithm ->
+      results = Enum.map(cases, fn case_data ->
+        res = run_balance_algorithm(case_data, algorithm)
+        IO.inspect(res, label: "Result for #{case_data[:name]} with #{algorithm}", charlists: :as_lists)
+        res
+      end)
+
+      {algorithm, summarize_results(results)}
+    end)
   end
 
-  @tag runnable: false
-  test "Compare algorithms: High low" do
-    groups = [
-      [54.42], [43.11], [42.72], [41.01], [30.13], [30.81], [9.78], [8.20],
-      [7.10], [6.11], [5.10], [4.08], [3.91], [3.19], [2.1], [1.01], ]
-    compare_algorithm_results(groups, 2, "High low")
-    compare_algorithm_times(groups, 2, "High low")
+  def summarize_results(results) do
+    result_count = length(results)
+    Enum.reduce(results, %{
+      average_deviation: 0,
+      average_time: 0,
+      parties_preserved: 0,
+    }, fn result, acc ->
+      %{
+        average_deviation: acc.average_deviation + result.deviation / result_count,
+        average_time: acc.average_time + result.average_time / result_count,
+        parties_preserved: acc.parties_preserved + result.parties[:preserved],
+      }
+    end)
   end
+
+  def run_balance_algorithm(case_data, algorithm) do
+    parties = case_data[:groups]
+    team_count = case_data[:team_count]
+    case_name = case_data[:name]
+
+    party_map_list = to_party_map_list(parties)
+
+    balancing_result =
+      BalanceLib.create_balance(
+        party_map_list,
+        team_count,
+        algorithm: algorithm
+      )
+
+    result_time = if @iterations > 0 do
+      1..@iterations
+        |> Enum.map(fn _ ->
+          BalanceLib.create_balance(
+            party_map_list,
+            team_count,
+            algorithm: algorithm
+          )
+        end)
+        |> Enum.map(fn result -> result.time_taken end)
+        |> Enum.sum()
+    else
+      0
+    end
+
+    %{
+      deviation: balancing_result.deviation,
+      ratings: balancing_result.ratings,
+      means: balancing_result.means,
+      stdevs: balancing_result.stdevs,
+      time_taken: balancing_result.time_taken,
+      team_groups: simple_teams(balancing_result.team_groups),
+      parties: parties_preserved(parties, simple_teams(balancing_result.team_groups)),
+      average_time: if @iterations > 0 do result_time / @iterations else 0 end,
+    }
+  end
+
+  # @tag runnable: false
+  # test "Compare algorithms stacked groups" do
+  #   compare_algorithm_results(stacked_groups["groups"], stacked_groups["team_count"], stacked_groups["name"])
+  #   compare_algorithm_times(stacked_groups["groups"], stacked_groups["team_count"], stacked_groups["name"])
+  # end
+
+
+  # @tag runnable: false
+  # test "Compare algorithms MasterBel2 case" do
+  #   groups = [ [9.39, 15.14], [28.84, 15.06], [43.69], [29.56], [28.27],
+  #     [25.34], [23.45], [21.65], [21.6], [18.46], [17.7], [16.29],
+  #     [16.01], [10.27] ]
+  #   compare_algorithm_results(groups, 2, "MasterBel2 case")
+  #   compare_algorithm_times(groups, 2, "MasterBel2 case")
+  # end
+
+  # @tag runnable: false
+  # test "Compare algorithms: team_ffa" do
+  #   groups = [ [5], [6], [7], [8], [9], [9] ]
+  #   compare_algorithm_results(groups, 3, "team_ffa")
+  #   compare_algorithm_times(groups, 3, "team_ffa")
+  # end
+
+  # @tag runnable: false
+  # test "Compare algorithms: smurf party" do
+  #   groups = [ [51, 10, 10],
+  #     [35], [34], [29], [28], [27], [26], [25], [21], [19], [16],
+  #     [15], [14], [8] ]
+  #   compare_algorithm_results(groups, 2, "smurf party")
+  #   compare_algorithm_times(groups, 2, "smurf party")
+  # end
+
+  # @tag runnable: false
+  # test "Compare algorithms: odd users" do
+  #   groups = [ [51], [10], [10], [35], [34], [29], [28], [27], [26],
+  #     [25], [21], [19], [16], [15], [8] ]
+  #   compare_algorithm_results(groups, 2, "odd users")
+  #   compare_algorithm_times(groups, 2, "odd users")
+  # end
+
+  # @tag runnable: true
+  # test "Compare algorithms: Even spread" do
+  #   groups = [ [24.42], [23.11], [22.72], [21.01], [20.13], [20.81], [19.78],
+  #     [18.20], [17.10], [16.11], [15.10], [14.08], [13.91], [13.19], [12.1],
+  #     [11.01], ]
+  #   compare_algorithm_results(groups, 2, "Even spread")
+  #   compare_algorithm_times(groups, 2, "Even spread")
+  # end
+
+  # @tag runnable: false
+  # test "Compare algorithms: Even spread - itegers" do
+  #   groups = [ [24], [23], [22], [21], [20], [20], [19], [18], [17], [16],
+  #    [15], [14], [13], [13], [12], [11] ]
+  #   compare_algorithm_results(groups, 2, "Even spread - integers")
+  #   compare_algorithm_times(groups, 2, "Even spread - integers")
+  # end
+
+  # @tag runnable: false
+  # test "Compare algorithms: High low" do
+  #   groups = [
+  #     [54.42], [43.11], [42.72], [41.01], [30.13], [30.81], [9.78], [8.20],
+  #     [7.10], [6.11], [5.10], [4.08], [3.91], [3.19], [2.1], [1.01], ]
+  #   compare_algorithm_results(groups, 2, "High low")
+  #   compare_algorithm_times(groups, 2, "High low")
+  # end
 
   def simple_teams(teams) do
     teams
@@ -856,6 +866,13 @@ defmodule Teiserver.Battle.BalanceLibTest do
       party_map_list,
       parties,
       team_count,
+      :cheeky_switcher_smart,
+      test_name)
+
+    run_algorithm_and_print_results(
+      party_map_list,
+      parties,
+      team_count,
       :loser_picks,
       test_name)
 
@@ -904,10 +921,22 @@ defmodule Teiserver.Battle.BalanceLibTest do
       |> Enum.map(fn result -> result.time_taken end)
       |> Enum.sum()
 
+    result_cheeky_switcher_smart_time = 1..iterations
+      |> Enum.map(fn _ ->
+        BalanceLib.create_balance(
+          party_map_list,
+          team_count,
+          algorithm: :cheeky_switcher_smart
+        )
+      end)
+      |> Enum.map(fn result -> result.time_taken end)
+      |> Enum.sum()
+
     IO.inspect(%{
       loser_picks_time: result_loser_picks_time / iterations,
       cheeky_switcher_time: result_cheeky_switcher_time / iterations,
-      cheeky_switcher_rating_time: result_cheeky_switcher_rating_time / iterations
+      cheeky_switcher_rating_time: result_cheeky_switcher_rating_time / iterations,
+      cheeky_switcher_smart_time: result_cheeky_switcher_smart_time / iterations
     })
   end
 end

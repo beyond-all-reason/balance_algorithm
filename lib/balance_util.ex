@@ -247,30 +247,44 @@ defmodule Teiserver.Battle.BalanceUtil do
     |> Enum.min_max_by(fn {_team_id, rating} -> rating end)
   end
 
-  @spec make_group_combinations([expanded_group()], non_neg_integer(), boolean()) :: [[{expanded_group(), non_neg_integer()}]]
+  @spec make_group_combinations([expanded_group()], non_neg_integer(), boolean()) :: {[[{expanded_group(), non_neg_integer()}]], map()}
   def make_group_combinations([], _match_member_count) do [] end
   def make_group_combinations(_groups, 0) do [] end
-  def make_group_combinations(groups, match_member_count) do make_group_combinations(groups, match_member_count, false) end
-  def make_group_combinations(groups, match_member_count, include_smaller_combos) do
+  def make_group_combinations(groups, match_member_count) do make_group_combinations(groups, match_member_count, false, %{}) end
+  def make_group_combinations(groups, match_member_count, include_smaller_combos) do make_group_combinations(groups, match_member_count, include_smaller_combos, %{}) end
+  def make_group_combinations(groups, match_member_count, include_smaller_combos, combo_memo) do
     groups_with_index = Enum.with_index(groups)
-
     # Find all combinations of all groups that could possibly combine to make a match
-    1..match_member_count
-    |> Enum.map(fn i ->
+
+    {intial_combos, combo_memo} = Enum.reduce(1..match_member_count, {[], combo_memo}, fn i, {acc, memo} ->
       # This allows us to combine uneven sized groups, we will later just filter out the ones
       # that don't match the match_member_count
       group_indicies_of_size_i = groups_with_index
       |> Enum.filter(fn {group, _index} -> group.count <= i end)
       |> Enum.map(fn {_group, index} -> index end)
-      combine(group_indicies_of_size_i, match_member_count - i + 1)
-      end)
+
+      key = "#{group_indicies_of_size_i |> Enum.sort |> Enum.join("-")}:#{match_member_count - i + 1}"
+
+      case Map.get(memo, key) do
+        nil ->
+          combo_res = combine(group_indicies_of_size_i, match_member_count - i + 1)
+          {[combo_res | acc], Map.put(memo, key, combo_res)}
+        existing_res ->
+          {[existing_res | acc], memo}
+      end
+    end)
+
+    res = intial_combos
     |> Enum.flat_map(fn group_combos -> group_combos end)
     |> Enum.filter(fn combo_of_indicies -> length(combo_of_indicies) > 0 end)
     |> Enum.uniq_by(fn combo_of_indicies -> combo_of_indicies
       |> Enum.map(fn i -> to_string(i) end)
       |> Enum.join("-")
+    end)
+    |> Enum.map(fn combo_of_indicies ->
+      Enum.filter(groups_with_index, fn {_g, i} ->
+        i in combo_of_indicies
       end)
-    |> Enum.map(fn combo_of_indicies -> Enum.filter(groups_with_index, fn {_g, i} -> i in combo_of_indicies end)
     end)
     # Only keep the combinations that have the right number of total members
     |> Enum.filter(
@@ -282,6 +296,8 @@ defmodule Teiserver.Battle.BalanceUtil do
           total_members == match_member_count
         end
       end)
+
+    {res, combo_memo}
   end
 
   # Copied from https://github.com/seantanly/elixir-combination/blob/v0.0.3/lib/combination.ex#L1

@@ -7,6 +7,7 @@ defmodule Teiserver.Battle.BalanceLib do
   alias Teiserver.Game.MatchRatingLib
   alias Teiserver.Battle.LoserPicksAlgorithm
   alias Teiserver.Battle.CheekySwitcherAlgorithm
+  alias Teiserver.Battle.CheekySwitcherSmartAlgorithm
   alias Teiserver.Battle.BruteForceAlgorithm
   import Central.Helpers.NumberHelper, only: [int_parse: 1]
   import Teiserver.Battle.BalanceUtil
@@ -67,6 +68,8 @@ defmodule Teiserver.Battle.BalanceLib do
           CheekySwitcherAlgorithm.cheeky_switcher(expanded_groups, team_count, opts)
         :cheeky_switcher_rating ->
           CheekySwitcherAlgorithm.cheeky_switcher_rating(expanded_groups, team_count, opts)
+        :cheeky_switcher_smart ->
+          CheekySwitcherSmartAlgorithm.cheeky_switcher(expanded_groups, team_count, opts)
         :brute_force ->
           BruteForceAlgorithm.brute_force_dont_use_in_production_for_the_love_of_bar(expanded_groups, team_count, opts)
       end
