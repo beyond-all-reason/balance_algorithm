@@ -623,16 +623,14 @@ defmodule Teiserver.Battle.BalanceLibTest do
     team_count: 2
   }
 
-  # @iterations 1000
   @iterations 100
 
   @tag runnable: true
   @tag timeout: :infinity
   test "Compare all algorithms against cases" do
-    cases = [@stacked_groups, @master_bel, @team_ffa, @smurf_party, @odd_users, @even_spread, @even_spread_integers, @high_low, @mega_lobby, @mega_lobby_parties]
-    algorithms = [:cheeky_switcher, :loser_picks, :cheeky_switcher_rating, :cheeky_switcher_smart]
     # cases = [@stacked_groups]
-    # algorithms = [:cheeky_switcher_smart]
+    cases = [@stacked_groups, @master_bel, @team_ffa, @smurf_party, @odd_users, @even_spread, @even_spread_integers, @high_low, @mega_lobby, @mega_lobby_parties]
+    algorithms = [:cheeky_switcher_smart, :loser_picks]
 
     results = summarize_average_case_results_per_algorithm(algorithms, cases)
 
@@ -679,6 +677,11 @@ defmodule Teiserver.Battle.BalanceLibTest do
         team_count,
         algorithm: algorithm
       )
+
+    # Look at logs
+    # IO.puts("Balancing result for #{algorithm}/#{case_name}: #{Enum.join(balancing_result[:logs], "\n")}")
+    # IO.inspect(balancing_result[:logs], charlists: :as_lists)
+
 
     result_time = if @iterations > 0 do
       1..@iterations

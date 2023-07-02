@@ -62,6 +62,8 @@ defmodule Teiserver.Battle.CheekySwitcherSmartAlgorithm do
 
     parties_left = count_parties_in_teams(teams)
 
+    log = log ++ ["Current team ratings: #{team_ratings(teams) |> Enum.map(&round/1) |> Enum.join(", ")}"]
+
     if is_acceptable or parties_left <= 0 do
       {teams, log  ++ ["Acceptable rating difference of #{round(100 * rating_diff) / 100} (#{round(100 * percentage_diff) / 100} %)."]}
     else
@@ -301,21 +303,21 @@ defmodule Teiserver.Battle.CheekySwitcherSmartAlgorithm do
 
   defp place_groups_to_smallest_teams([next_group | rest_groups], teams, log) do
     team_key = find_smallest_team_key(teams);
-    placement_logs = make_pick_logs(team_key, next_group)
+    existing_team_rating = sum_group_rating(teams[team_key])
+    placement_logs = make_pick_logs(team_key, next_group, existing_team_rating)
     place_groups_to_smallest_teams(
       rest_groups,
       add_group_to_team(teams, next_group, team_key),
       log ++ placement_logs)
   end
 
-  defp make_pick_logs(team_key, next_group) do
-    {placement_logs, _r} = next_group.names
-      |> Enum.with_index()
-      |> Enum.reduce({[], 0}, fn {name, i}, {group_log, acc_rating} ->
-        new_acc_rating = acc_rating + Enum.at(next_group.ratings, i)
-        {group_log ++ ["Picked #{name} for team #{team_key}, adding #{Enum.at(next_group.ratings, i)} points for a new total of #{new_acc_rating}"], new_acc_rating}
-      end)
-    placement_logs
+  defp make_pick_logs(team_key, next_group, existing_team_rating) do
+    %{ :names => names, :group_rating => group_rating } = next_group
+    if next_group.count > 1 do
+      ["Group picked #{names |> Enum.join(", ")} for team #{team_key}, adding #{group_rating} points for a new total of #{round(existing_team_rating + group_rating)}"]
+    else
+      ["Picked #{Enum.at(names, 0)} for team #{team_key}, adding #{group_rating} points for a new total of #{round(existing_team_rating + group_rating)}"]
+    end
   end
 
   @spec teams_to_groups_without_largest_party(map(), list()) :: {group_list(), list()}
