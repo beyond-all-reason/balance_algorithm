@@ -372,15 +372,9 @@ defmodule Teiserver.Battle.BalanceLib do
           {team_id, []} ->
             {team_id, nil}
 
-          {team_id, players} ->
+          {team_id, _players} ->
             top_player =
-              players
-              |> Enum.map(fn userid ->
-                {ratings[userid], userid}
-              end)
-              |> Enum.sort_by(fn v -> v end, &>=/2)
-              |> hd
-              |> elem(1)
+              get_captain(data.team_groups[team_id])
 
             {team_id, top_player}
         end)
@@ -710,5 +704,35 @@ defmodule Teiserver.Battle.BalanceLib do
     else
       for(y <- make_combinations(n - x.count, xs), do: [x | y]) ++ make_combinations(n, xs)
     end
+  end
+
+  @doc """
+  Returns the id of the highest rated member
+  team_groups =[
+      %{
+        count: 3,
+        ratings: [19, 16, 16],
+        members: [112, 113, 114],
+        group_rating: 51
+      },
+      %{count: 2, ratings: [14, 8], members: [115, 116], group_rating: 22},
+      %{count: 1, ratings: [41], members: [101], group_rating: 41},
+      %{count: 1, ratings: [26], members: [109], group_rating: 26},
+      %{count: 1, ratings: [21], members: [111], group_rating: 21}
+  ]
+  """
+  def get_captain(team_groups) do
+    flatten_members =
+      for %{members: members, ratings: ratings} <- team_groups,
+          # Zipping will create binary tuples from 2 lists
+          {id, rating} <- Enum.zip(members, ratings),
+          # Create result value
+          do: %{member_id: id, rating: rating}
+
+    captain =
+      Enum.sort_by(flatten_members, fn x -> x.rating end, &>=/2)
+      |> Enum.at(0)
+
+    captain.member_id
   end
 end
