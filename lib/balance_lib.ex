@@ -720,6 +720,8 @@ defmodule Teiserver.Battle.BalanceLib do
       %{count: 1, ratings: [26], members: [109], group_rating: 26},
       %{count: 1, ratings: [21], members: [111], group_rating: 21}
   ]
+
+  Would return member id 101 who has highest rating of 41
   """
   def get_captain(team_groups) do
     flatten_members =
@@ -729,9 +731,7 @@ defmodule Teiserver.Battle.BalanceLib do
           # Create result value
           do: %{member_id: id, rating: rating}
 
-    captain =
-      Enum.sort_by(flatten_members, fn x -> x.rating end, &>=/2)
-      |> Enum.at(0)
+    captain = Enum.max_by(flatten_members, fn x -> x.rating end)
 
     captain.member_id
   end
